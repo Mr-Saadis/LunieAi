@@ -1,10 +1,9 @@
 // src/lib/supabase/server.js
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 
-// For server components
-export const createServerClient = () => createServerComponentClient({ cookies })
+// For server components - cookies will be passed as parameter
+export const createServerClient = (cookies) => createServerComponentClient({ cookies })
 
-// For API routes
-export const createRouteClient = () => createRouteHandlerClient({ cookies })
+// For API routes - cookies will be passed as parameter  
+export const createRouteClient = (cookies) => createRouteHandlerClient({ cookies })

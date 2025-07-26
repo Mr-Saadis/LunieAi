@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -14,6 +14,10 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
+
+import { TestTube} from 'lucide-react'
+
+
 import { toast } from 'sonner'
 import { 
   Bot, 
@@ -31,7 +35,6 @@ import {
   ChevronRight,
   Zap
 } from 'lucide-react'
-
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, current: true },
   { name: 'Chatbots', href: '/dashboard/chatbots', icon: Bot, current: false },
@@ -39,6 +42,9 @@ const navigation = [
   { name: 'Training Data', href: '/dashboard/training', icon: Database, current: false },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, current: false },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings, current: false },
+  // Add these test navigation items
+  { name: 'Database Tests', href: '/dashboard/tests', icon: TestTube, current: false, isDev: true },
+  { name: 'Quick Tests', href: '/dashboard/tests/quick', icon: Zap, current: false, isDev: true },
 ]
 
 const quickActions = [
@@ -130,23 +136,36 @@ export default function DashboardLayout({ children }) {
               </Button>
             </div>
             <nav className="mt-6 px-3">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg mb-1 transition-colors ${
-                    item.current
-                      ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <item.icon className={`w-5 h-5 mr-3 ${
-                    item.current ? 'text-blue-700' : 'text-gray-500 group-hover:text-gray-700'
-                  }`} />
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+  // Hide dev items in production
+  if (item.isDev && process.env.NODE_ENV === 'production') {
+    return null
+  }
+  
+  return (
+    <li key={item.name}>
+      <Link
+        href={item.href}
+        className={`group flex gap-x-3 rounded-lg p-3 text-sm leading-6 font-medium transition-colors ${
+          item.current
+            ? 'bg-blue-50 text-blue-700'
+            : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50'
+        }`}
+      >
+        <item.icon className={`h-5 w-5 shrink-0 ${
+          item.current ? 'text-blue-700' : 'text-gray-500 group-hover:text-blue-700'
+        }`} />
+        {item.name}
+        {item.isDev && (
+          <span className="ml-auto text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+            DEV
+          </span>
+        )}
+      </Link>
+    </li>
+  )
+})}
+
             </nav>
           </div>
         </div>

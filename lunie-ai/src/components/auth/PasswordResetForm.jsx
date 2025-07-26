@@ -15,7 +15,7 @@ export default function PasswordResetForm() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const supabase = createClient()
-  const { toast } = useToast()
+  // const { toast } = useToast()
 
   const handleReset = async (e) => {
     e.preventDefault()
@@ -27,24 +27,13 @@ export default function PasswordResetForm() {
       })
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        })
+        toast.error(error.message)
       } else {
         setSent(true)
-        toast({
-          title: "Success!",
-          description: "Password reset email sent! Check your inbox.",
-        })
+        toast.success("Password reset email sent! Check your inbox.")
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred",
-      })
+      toast.error("An unexpected error occurred")
     } finally {
       setLoading(false)
     }
@@ -111,7 +100,7 @@ export default function PasswordResetForm() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <div className="relative">
+                <div className="relative mb-3 ">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="email"

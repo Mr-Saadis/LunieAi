@@ -1,9 +1,15 @@
-// src/app/layout.js
-import { Inter } from 'next/font/google'
+// src/app/layout.js - Alternative with proper font loading
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 
-const inter = Inter({ subsets: ['latin'] })
+// Try importing with different options
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial']
+})
 
 export const metadata = {
   title: 'LunieAI - Intelligent Chatbots for Your Business',
