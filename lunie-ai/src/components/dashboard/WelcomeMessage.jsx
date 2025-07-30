@@ -1,5 +1,5 @@
 // src/components/dashboard/WelcomeMessage.jsx
-'use client'
+"use client"
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
