@@ -27,7 +27,7 @@ const ACCEPTED_FILE_TYPES = {
   'image/webp': ['.webp']
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = process.env.NEXT_MAX_FILE_SIZE
 const MAX_FILES = 5
 
 const getFileIcon = (fileType) => {

@@ -6,3 +6,6 @@ export const createClient = () => createClientComponentClient()
 
 // For browser-based usage
 export const supabase = createClientComponentClient()
+
+
+

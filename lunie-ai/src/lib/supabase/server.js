@@ -7,3 +7,6 @@ export const createServerClient = (cookies) => createServerComponentClient({ coo
 
 // For API routes - cookies will be passed as parameter  
 export const createRouteClient = (cookies) => createRouteHandlerClient({ cookies })
+
+
+
