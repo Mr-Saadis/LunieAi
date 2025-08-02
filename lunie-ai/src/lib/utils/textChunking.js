@@ -3,7 +3,7 @@
 // lib/utils/textChunking.js
 // ===========================================
 
-export function createChunksWithMetadata(text, metadata = {}, chunkSize = 800) {
+export function createChunksWithMetadata(text, metadata = {}, chunkSize = process.env.MAX_CHUNK_SIZE) {
   const chunks = chunkText(text, chunkSize);
   
   return chunks.map((chunk, index) => ({

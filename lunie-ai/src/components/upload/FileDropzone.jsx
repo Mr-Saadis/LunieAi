@@ -28,7 +28,7 @@ const ACCEPTED_FILE_TYPES = {
 }
 
 const MAX_FILE_SIZE = process.env.NEXT_MAX_FILE_SIZE
-const MAX_FILES = 5
+const MAX_FILES = process.env.NEXT_MAX_FILES
 
 const getFileIcon = (fileType) => {
   if (fileType === 'application/pdf') return FileText
