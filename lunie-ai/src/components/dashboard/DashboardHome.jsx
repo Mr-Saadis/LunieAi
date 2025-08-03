@@ -1,4 +1,4 @@
-//src/components/dashboard/DashboardHome.jsx - MOBILE OPTIMIZED VERSION
+//src/components/dashboard/DashboardHome.jsx
 'use client'
 
 import { useState, useEffect } from 'react'
