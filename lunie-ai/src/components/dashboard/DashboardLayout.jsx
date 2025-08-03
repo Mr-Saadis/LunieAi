@@ -249,12 +249,12 @@ export default function DashboardLayout({ children }) {
               </Button>
 
               {/* Create Chatbot - Quick Action */}
-              <Button asChild size="sm" className="hidden sm:flex bg-[#94B9F9] hover:bg-[#94B9F9]/90 text-white">
+              {/* <Button asChild size="sm" className="hidden sm:flex bg-[#94B9F9] hover:bg-[#94B9F9]/90 text-white">
                 <Link href="/dashboard/chatbots/new">
                   <Plus className="w-4 h-4 mr-2" />
                   Create
                 </Link>
-              </Button>
+              </Button> */}
 
               {/* User menu */}
               <DropdownMenu>
