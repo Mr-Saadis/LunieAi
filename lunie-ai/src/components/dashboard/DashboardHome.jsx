@@ -50,6 +50,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
+import {User, Heart, Coffee, Smile, Shield, Headphones, BookOpen, Laptop, Lightbulb,Briefcase, Home, Camera, Music, Phone, Mail, ShoppingCart} from 'lucide-react'
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,33 @@ import {
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
+
+const CHAT_ICONS = {
+  'Bot': Bot,
+  'User': User,
+  'Sparkles': Sparkles,
+  'Heart': Heart,
+  'Star': Star,
+  'Coffee': Coffee,
+  'Zap': Zap,
+  'Smile': Smile,
+  'Shield': Shield,
+  'Headphones': Headphones,
+  'Book': BookOpen,
+  'Lightbulb': Lightbulb,
+  'Rocket': Rocket,
+  'Target': Target,
+  'Briefcase': Briefcase,
+  'Globe': Globe,
+  'Home': Home,
+  'Camera': Camera,
+  'Music': Music,
+  'Phone': Phone,
+  'Mail': Mail,
+  'Shopping Cart': ShoppingCart,
+  'Laptop': Laptop,
+  'Message': MessageSquare
+}
 
 const quickActions = [
   {
@@ -179,6 +207,29 @@ const notifications = [
     unread: false
   }
 ]
+
+const getChatIcon = (iconName) => {
+    const IconComponent = CHAT_ICONS[iconName] || Bot
+    return IconComponent
+  }
+
+  const getThemeColorName = (color) => {
+    const colorNames = {
+      '#94B9F9': 'Blue',
+      '#F4CAF7': 'Purple',
+      '#FB8A8F': 'Coral',
+      '#10B981': 'Green',
+      '#F59E0B': 'Orange',
+      '#EF4444': 'Red',
+      '#6366F1': 'Indigo',
+      '#EC4899': 'Pink',
+      '#14B8A6': 'Teal',
+      '#06B6D4': 'Cyan',
+      '#84CC16': 'Lime',
+      '#F43F5E': 'Rose'
+    }
+    return colorNames[color] || 'Custom'
+  }
 
 export default function DashboardHome() {
   const [stats, setStats] = useState({
@@ -592,16 +643,26 @@ export default function DashboardHome() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 sm:space-y-4">
-                    {chatbots.slice(0, 3).map((chatbot) => (
+                    {chatbots.slice(0, 3).map((chatbot) => {
+                      const ChatIconComponent = getChatIcon(chatbot.chat_icon)
+                    return(
                       <div 
                         key={chatbot.id}
                         className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer group"
                         onClick={() => handleChatbotSelect(chatbot.id)}
                       >
                         <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                          
+                          <div 
+                              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
+                            >
+                              <ChatIconComponent className="w-5 h-5 text-white" />
+                            </div>
+
+                          {/* <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
                             <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                          </div>
+                          </div> */}
                           <div className="min-w-0 flex-1">
                             <h3 className="font-medium text-gray-900 group-hover:text-[#94B9F9] transition-colors text-sm sm:text-base truncate">
                               {chatbot.name}
@@ -669,7 +730,7 @@ export default function DashboardHome() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                   
                   {chatbots.length > 3 && (

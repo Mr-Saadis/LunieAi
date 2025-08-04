@@ -40,9 +40,60 @@ import {
   Settings,
   RefreshCw,
   HelpCircle,
-  Sparkles
+  Sparkles,
+  User,
+  Heart,
+  Star,
+  Coffee,
+  Zap,
+  Smile,
+  Shield,
+  Headphones,
+  BookOpen,
+  Lightbulb,
+  Rocket,
+  Target,
+  Briefcase,
+  Globe,
+  Home,
+  Camera,
+  Music,
+  Phone,
+  Mail,
+  ShoppingCart,
+  Laptop,
+  MessageSquare,
+  Palette
 } from 'lucide-react'
 import { toast } from 'sonner'
+
+const CHAT_ICONS = {
+  'Bot': Bot,
+  'User': User,
+  'Sparkles': Sparkles,
+  'Heart': Heart,
+  'Star': Star,
+  'Coffee': Coffee,
+  'Zap': Zap,
+  'Smile': Smile,
+  'Shield': Shield,
+  'Headphones': Headphones,
+  'Book': BookOpen,
+  'Lightbulb': Lightbulb,
+  'Rocket': Rocket,
+  'Target': Target,
+  'Briefcase': Briefcase,
+  'Globe': Globe,
+  'Home': Home,
+  'Camera': Camera,
+  'Music': Music,
+  'Phone': Phone,
+  'Mail': Mail,
+  'Shopping Cart': ShoppingCart,
+  'Laptop': Laptop,
+  'Message': MessageSquare
+}
+
 
 export default function ChatbotsPage() {
   const [chatbots, setChatbots] = useState([])
@@ -244,6 +295,30 @@ export default function ChatbotsPage() {
     return `Updated ${date.toLocaleDateString()}`
   }
 
+   const getChatIcon = (iconName) => {
+    const IconComponent = CHAT_ICONS[iconName] || Bot
+    return IconComponent
+  }
+
+  const getThemeColorName = (color) => {
+    const colorNames = {
+      '#94B9F9': 'Blue',
+      '#F4CAF7': 'Purple',
+      '#FB8A8F': 'Coral',
+      '#10B981': 'Green',
+      '#F59E0B': 'Orange',
+      '#EF4444': 'Red',
+      '#6366F1': 'Indigo',
+      '#EC4899': 'Pink',
+      '#14B8A6': 'Teal',
+      '#06B6D4': 'Cyan',
+      '#84CC16': 'Lime',
+      '#F43F5E': 'Rose'
+    }
+    return colorNames[color] || 'Custom'
+  }
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-96">
@@ -354,7 +429,9 @@ export default function ChatbotsPage() {
           <div className="space-y-4">
             {/* Mobile List View - Always visible on mobile */}
             <div className="md:hidden space-y-4">
-              {filteredChatbots.map((chatbot, index) => (
+              {filteredChatbots.map((chatbot, index) => {
+                const ChatIconComponent = getChatIcon(chatbot.chat_icon)
+                return (
                 <Card key={`mobile-${chatbot.id}`} className="border-gray-200">
                   <CardContent className="p-4">
                     <div className="space-y-4">
@@ -362,9 +439,16 @@ export default function ChatbotsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3 min-w-0 flex-1">
                           <span className="text-sm font-bold text-gray-400">#{index + 1}</span>
-                          <div className="w-8 h-8 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-lg flex items-center justify-center">
+                          
+                           <div 
+                              className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
+                            >
+                              <ChatIconComponent className="w-5 h-5 text-white" />
+                            </div>
+                          {/* <div className="w-8 h-8 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-lg flex items-center justify-center">
                             <Bot className="w-4 h-4 text-white" />
-                          </div>
+                          </div> */}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center space-x-2">
                               <h3 className="font-semibold text-gray-900 truncate text-sm">{chatbot.name}</h3>
@@ -466,21 +550,31 @@ export default function ChatbotsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )})
+            }
             </div>
-
             {/* Desktop List View - Always list view now */}
             <div className="hidden md:block space-y-4">
-              {filteredChatbots.map((chatbot, index) => (
+              {filteredChatbots.map((chatbot, index) => {
+                const ChatIconComponent = getChatIcon(chatbot.chat_icon)
+                // Render desktop view
+              return(
                 <Card key={`desktop-${chatbot.id}`} className="border-gray-200 hover:shadow-lg transition-all duration-200 group">
                   <CardContent className="p-4">
                     {/* Desktop List View */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4 flex-1">
                           <span className="text-lg font-bold text-gray-400">#{index + 1}</span>
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center">
-                            <Bot className="w-5 h-5 text-white" />
+
+                           <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                            style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
+                          >
+                            <ChatIconComponent className="w-6 h-6 text-white" />
                           </div>
+                          {/* <div className="w-10 h-10 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center">
+                            <Bot className="w-5 h-5 text-white" />
+                          </div> */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
                               <h3 className="font-semibold text-gray-900">{chatbot.name}</h3>
@@ -591,7 +685,7 @@ export default function ChatbotsPage() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )})}
               </div>
           </div>
         )}

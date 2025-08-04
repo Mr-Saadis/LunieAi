@@ -8,19 +8,19 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { 
-  ArrowLeft, 
-  Bot, 
-  Database, 
-  MessageSquare, 
-  BarChart3, 
-  Settings, 
+import {
+  ArrowLeft,
+  Bot,
+  Database,
+  MessageSquare,
+  BarChart3,
+  Settings,
   Play,
   ChevronRight,
   Home,
@@ -37,6 +37,41 @@ import {
   Crown
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Heart, Coffee, Zap, Star, Smile, Shield, Headphones, BookOpen, Laptop, Lightbulb, Briefcase, Camera, Music, Phone, Mail, ShoppingCart } from 'lucide-react'
+import { Globe, Rocket, Target } from 'lucide-react'
+import { Check, ChevronsUpDown } from 'lucide-react'
+import {
+  DropdownMenuSeparator,
+  DropdownMenuLabel
+} from '@/components/ui/dropdown-menu'
+import { ChevronDown } from 'lucide-react'
+
+const CHAT_ICONS = {
+  'Bot': Bot,
+  'User': User,
+  'Sparkles': Sparkles,
+  'Heart': Heart,
+  'Star': Star,
+  'Coffee': Coffee,
+  'Zap': Zap,
+  'Smile': Smile,
+  'Shield': Shield,
+  'Headphones': Headphones,
+  'Book': BookOpen,
+  'Lightbulb': Lightbulb,
+  'Rocket': Rocket,
+  'Target': Target,
+  'Briefcase': Briefcase,
+  'Globe': Globe,
+  'Home': Home,
+  'Camera': Camera,
+  'Music': Music,
+  'Phone': Phone,
+  'Mail': Mail,
+  'Shopping Cart': ShoppingCart,
+  'Laptop': Laptop,
+  'Message': MessageSquare
+}
 
 // 🔝 GLOBAL NAVIGATION (Top NavBar)
 const globalNavigation = [
@@ -48,39 +83,39 @@ const globalNavigation = [
 
 // 📱 CHATBOT-SPECIFIC NAVIGATION (Left Sidebar)
 const chatbotNavigation = [
-  { 
-    name: 'Overview', 
-    href: '/overview', 
+  {
+    name: 'Overview',
+    href: '/overview',
     icon: Home,
     description: 'Individual chatbot overview'
   },
-  { 
-    name: 'Training Data', 
-    href: '/training', 
+  {
+    name: 'Training Data',
+    href: '/training',
     icon: Database,
     description: 'Files, websites & content'
   },
-  { 
-    name: 'Conversations', 
-    href: '/conversations', 
+  {
+    name: 'Conversations',
+    href: '/conversations',
     icon: MessageSquare,
     description: 'Chat history & analytics'
   },
-  { 
-    name: 'Analytics', 
-    href: '/analytics', 
+  {
+    name: 'Analytics',
+    href: '/analytics',
     icon: BarChart3,
     description: 'Performance insights'
   },
-  { 
-    name: 'Settings', 
-    href: '/settings', 
+  {
+    name: 'Settings',
+    href: '/settings',
     icon: Settings,
     description: 'Chatbot configuration'
   },
-  { 
-    name: 'Playground', 
-    href: '/playground', 
+  {
+    name: 'Playground',
+    href: '/playground',
     icon: Play,
     description: 'Test your chatbot'
   }
@@ -119,6 +154,11 @@ export default function ChatbotLayout({ children }) {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const [userChatbots, setUserChatbots] = useState([])
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
@@ -133,6 +173,18 @@ export default function ChatbotLayout({ children }) {
         return
       }
       setUser(user)
+      const { data: chatbots, error } = await supabase
+        .from('chatbots')
+        .select('id, name, is_active, theme_color, chat_icon')
+        .eq('user_id', user.id)
+        .order('name')
+
+      if (error) {
+        console.error('Error fetching chatbots:', error)
+        return
+      }
+
+      setUserChatbots(chatbots || [])
 
       // Get profile
       const { data: profile } = await supabase
@@ -159,6 +211,7 @@ export default function ChatbotLayout({ children }) {
 
         setChatbot(chatbotData)
       }
+
 
       setLoading(false)
     }
@@ -193,6 +246,29 @@ export default function ChatbotLayout({ children }) {
     return pathname === fullHref
   }
 
+  const getChatIcon = (iconName) => {
+    const IconComponent = CHAT_ICONS[iconName] || Bot
+    return IconComponent
+  }
+
+  const getThemeColorName = (color) => {
+    const colorNames = {
+      '#94B9F9': 'Blue',
+      '#F4CAF7': 'Purple',
+      '#FB8A8F': 'Coral',
+      '#10B981': 'Green',
+      '#F59E0B': 'Orange',
+      '#EF4444': 'Red',
+      '#6366F1': 'Indigo',
+      '#EC4899': 'Pink',
+      '#14B8A6': 'Teal',
+      '#06B6D4': 'Cyan',
+      '#84CC16': 'Lime',
+      '#F43F5E': 'Rose'
+    }
+    return colorNames[color] || 'Custom'
+  }
+
   const getCurrentPageTitle = () => {
     if (pathname?.includes('/training')) return 'Training Data'
     if (pathname?.includes('/conversations')) return 'Conversations'
@@ -216,6 +292,135 @@ export default function ChatbotLayout({ children }) {
     )
   }
 
+  const handleChatbotChange = (newChatbotId) => {
+    try {
+      const pathParts = pathname.split('/')
+      const dashboardIndex = pathParts.indexOf('dashboard')
+      const chatbotIndex = dashboardIndex + 1
+
+      const remainingPath = pathParts.slice(chatbotIndex + 1).join('/')
+      const newPath = `/dashboard/${newChatbotId}${remainingPath ? '/' + remainingPath : ''}`
+
+      router.push(newPath)
+    } catch (error) {
+      console.error('Error changing chatbot:', error)
+      toast.error('Failed to switch chatbot')
+    }
+  }
+
+  const ChatbotSwitcher = ({ currentChatbot, chatbots, onChatbotChange }) => {
+    const getChatIconComponent = (iconName) => {
+      const IconComponent = CHAT_ICONS[iconName] || Bot
+      return IconComponent
+    }
+
+    return (
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            role="combobox"
+            aria-expanded={dropdownOpen}
+            className="w-full justify-between px-3 py-2 h-auto hover:bg-gray-50"
+          >
+            <div className="flex items-center space-x-3">
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                style={{ backgroundColor: currentChatbot?.theme_color || '#94B9F9' }}
+              >
+                {currentChatbot && (() => {
+                  const ChatIconComponent = getChatIconComponent(currentChatbot.chat_icon)
+                  return <ChatIconComponent className="w-4 h-4 text-white" />
+                })()}
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <div className="font-medium text-sm truncate">
+                  {currentChatbot?.name || 'Select Chatbot'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentChatbot?.is_active ? 'Active' : 'Inactive'}
+                </div>
+              </div>
+            </div>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent className="w-64 p-0" align="start">
+          <div className="p-2">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 py-1">
+              Your Chatbots ({chatbots.length})
+            </div>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto">
+            {chatbots.length === 0 ? (
+              <div className="px-4 py-3 text-center text-sm text-gray-500">
+                No chatbots found
+              </div>
+            ) : (
+              chatbots.map((bot) => {
+                const isSelected = currentChatbot?.id === bot.id
+                const ChatIconComponent = getChatIconComponent(bot.chat_icon)
+
+                return (
+                  <DropdownMenuItem
+                    key={bot.id}
+                    className="px-3 py-2 cursor-pointer focus:bg-gray-50"
+                    onSelect={() => {
+                      onChatbotChange(bot.id)
+                      setDropdownOpen(false)
+                    }}
+                  >
+                    <div className="flex items-center space-x-3 w-full">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                        style={{ backgroundColor: bot.theme_color || '#94B9F9' }}
+                      >
+                        <ChatIconComponent className="w-4 h-4 text-white" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm truncate">
+                            {bot.name}
+                          </span>
+                          {isSelected && (
+                            <Check className="h-4 w-4 text-[#94B9F9] ml-2" />
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          <Badge className={`text-xs ${bot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} border-0`}>
+                            {bot.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                )
+              })
+            )}
+          </div>
+
+          <DropdownMenuSeparator />
+
+          <div className="p-2">
+            <DropdownMenuItem asChild>
+              <Link
+                href="/dashboard/chatbots/new"
+                className="flex items-center px-2 py-2 text-sm cursor-pointer w-full rounded-md hover:bg-gray-50"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create New Chatbot
+              </Link>
+            </DropdownMenuItem>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+
   if (!chatbot) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -225,7 +430,7 @@ export default function ChatbotLayout({ children }) {
           <p className="text-gray-600 mb-6">The chatbot you're looking for doesn't exist or you don't have access to it.</p>
           <Button asChild>
             <Link href="/dashboard">
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-2 mr-2" />
               Back to Dashboard
             </Link>
           </Button>
@@ -233,16 +438,16 @@ export default function ChatbotLayout({ children }) {
       </div>
     )
   }
-
+  const ChatIconComponent = getChatIcon(chatbot.chat_icon)
   return (
-    <div className="min-h-screen bg-gray-50">     
+    <div className="min-h-screen bg-gray-50">
 
       <div className="flex">
         {/* 📱 LEFT SIDEBAR - CHATBOT NAVIGATION */}
         <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:pt-16">
           <div className="flex grow flex-col overflow-y-auto bg-white border-r border-gray-200">
             {/* Chatbot Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            <div className="flex items-center justify-between p-4 pt-2 pb-2 border-b border-gray-100">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -253,18 +458,40 @@ export default function ChatbotLayout({ children }) {
 
             {/* Chatbot Info */}
             <div className="px-4 py-4 border-b border-gray-100">
+
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center shadow-sm">
-                  <Bot className="w-5 h-5 text-white" />
+
+
+
+                <div className="px-4 py-4 border-b border-gray-100">
+                  <ChatbotSwitcher
+                    currentChatbot={chatbot}
+                    chatbots={userChatbots}
+                    onChatbotChange={handleChatbotChange}
+                  />
                 </div>
-                <div className="flex-1 min-w-0">
+
+
+
+{/* 
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                  style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
+                >
+                  <ChatIconComponent className="w-5 h-5 text-white" />
+                </div> */}
+
+                {/* <div className="w-10 h-10 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center shadow-sm">
+                  <Bot className="w-5 h-5 text-white" />
+                </div> */}
+                {/* <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-semibold text-gray-900 truncate">{chatbot.name}</h2>
                   <div className="flex items-center mt-1">
                     <Badge className={`text-xs ${chatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} border-0`}>
                       {chatbot.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -276,15 +503,13 @@ export default function ChatbotLayout({ children }) {
                   <Link
                     key={item.name}
                     href={`/dashboard/${chatbotId}${item.href}`}
-                    className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-[#EBF6FC] to-[#F4CAF7]/10 text-[#94B9F9] shadow-sm border border-[#94B9F9]/20'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                    className={`group flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                      ? 'bg-gradient-to-r from-[#EBF6FC] to-[#F4CAF7]/10 text-[#94B9F9] shadow-sm border border-[#94B9F9]/20'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
                   >
-                    <item.icon className={`w-5 h-5 mr-3 transition-colors ${
-                      isActive ? 'text-[#94B9F9]' : 'text-gray-400 group-hover:text-gray-600'
-                    }`} />
+                    <item.icon className={`w-5 h-5 mr-3 transition-colors ${isActive ? 'text-[#94B9F9]' : 'text-gray-400 group-hover:text-gray-600'
+                      }`} />
                     <div className="flex-1">
                       <div className="font-medium">{item.name}</div>
                       <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
@@ -375,16 +600,14 @@ export default function ChatbotLayout({ children }) {
                       <Link
                         key={item.name}
                         href={`/dashboard/${chatbotId}${item.href}`}
-                        className={`flex items-center px-3 py-3 text-sm rounded-lg transition-colors ${
-                          isActive 
-                            ? 'bg-[#EBF6FC] text-[#94B9F9]' 
-                            : 'hover:bg-gray-100'
-                        }`}
+                        className={`flex items-center px-3 py-3 text-sm rounded-lg transition-colors ${isActive
+                          ? 'bg-[#EBF6FC] text-[#94B9F9]'
+                          : 'hover:bg-gray-100'
+                          }`}
                         onClick={() => setSidebarOpen(false)}
                       >
-                        <item.icon className={`w-4 h-4 mr-3 ${
-                          isActive ? 'text-[#94B9F9]' : 'text-gray-400'
-                        }`} />
+                        <item.icon className={`w-4 h-4 mr-3 ${isActive ? 'text-[#94B9F9]' : 'text-gray-400'
+                          }`} />
                         <div>
                           <div className="font-medium">{item.name}</div>
                           <div className="text-xs text-gray-500">{item.description}</div>
