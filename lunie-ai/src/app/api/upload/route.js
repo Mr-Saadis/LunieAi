@@ -6,12 +6,21 @@ import { NextResponse } from 'next/server'
 const MAX_FILE_SIZE = process.env.NEXT_MAX_FILE_SIZE
 
 const ALLOWED_TYPES = [
+  // 'application/pdf',
+  // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  // 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  // 'image/png',
+  // 'image/jpeg',
+  // 'image/webp'
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'image/png',
   'image/jpeg',
-  'image/webp'
+  'image/jpg',
+  'image/webp',
+  'image/bmp',
+  'image/tiff'
 ]
 
 export async function POST(request) {
@@ -572,10 +581,443 @@ export async function POST(request) {
         }
       }
       console.log('=== XLSX PROCESSING END ===')
-    }
     
+    // Add this after the XLSX processing section in your upload route
+// Replace your image processing section with this improved version:
+
+// Find and REPLACE your image processing section with this:
+
+// } else if (file.type.startsWith('image/')) {
+//   console.log('=== FASTAPI OCR PROCESSING START ===')
+//   console.log('This is an image file, attempting FastAPI OCR processing...')
+  
+//   try {
+//     // Update status to processing
+//     await supabase
+//       .from('training_data')
+//       .update({ processing_status: 'processing' })
+//       .eq('id', trainingData.id)
+
+//     console.log('Status updated to processing')
+
+//     let imageResult;
+    
+//     // Try FastAPI OCR
+//     try {
+//       const { processFastApiOCR } = await import('@/lib/processors/fastApiOcrProcessor')
+//       console.log('✅ FastAPI OCR processor imported successfully')
+
+//       const language = formData.get('language') || 'eng';
+//       const enhance = formData.get('enhance') !== 'false';
+//       const enhancement_level = formData.get('enhancement_level') || 'medium';
+
+//       imageResult = await processFastApiOCR(buffer, { 
+//         language, 
+//         enhance, 
+//         enhancement_level,
+//         chunk_text: true,
+//         chunk_size: 800
+//       })
+//       console.log('FastAPI OCR processing completed:', imageResult.success)
+      
+//     } catch (ocrError) {
+//       console.log('⚠️ FastAPI OCR failed, using fallback:', ocrError.message)
+      
+//       // Fallback to placeholder
+//       imageResult = {
+//         success: true,
+//         text: `[IMAGE UPLOADED - FastAPI OCR Service Not Available]
+
+// This image has been uploaded successfully but the FastAPI OCR service is not running.
+
+// File: ${file.name}
+// Size: ${(file.size / 1024).toFixed(1)} KB
+// Type: ${file.type}
+// Upload Time: ${new Date().toLocaleString()}
+
+// To enable OCR text extraction:
+// 1. Start the Python FastAPI OCR service on port 8002
+// 2. Ensure all Python dependencies are installed
+// 3. Verify Tesseract OCR is properly configured
+
+// Service Status: ${ocrError.message}`,
+//         chunks: [],
+//         confidence: 0,
+//         metadata: {
+//           processingMethod: 'fallback_service_unavailable',
+//           ocrAttempted: true,
+//           error: ocrError.message,
+//           serviceUrl: 'http://localhost:8002'
+//         }
+//       };
+//     }
+
+//     if (imageResult.success) {
+//       console.log('✅ Image OCR processing successful!')
+//       console.log('- Processing method:', imageResult.metadata?.processingMethod || 'fastapi_ocr')
+//       console.log('- Text length:', imageResult.text?.length || 0)
+//       console.log('- Confidence:', imageResult.confidence || 'N/A')
+//       console.log('- Chunks created:', imageResult.chunks?.length || 0)
+//       console.log('- Word count:', imageResult.metadata?.wordCount || 0)
+
+//       // Update training data with processed content
+//       await supabase
+//         .from('training_data')
+//         .update({
+//           content: imageResult.text,
+//           processing_status: 'completed',
+//           processed_at: new Date().toISOString(),
+//           chunk_count: imageResult.chunks?.length || 0,
+//           metadata: imageResult.metadata || {}
+//         })
+//         .eq('id', trainingData.id)
+
+//       // Store chunks
+//       if (imageResult.chunks && imageResult.chunks.length > 0) {
+//         const chunkInserts = imageResult.chunks.map((chunk, index) => ({
+//           training_data_id: trainingData.id,
+//           content: chunk,
+//           chunk_index: index,
+//           metadata: { 
+//             confidence: imageResult.confidence || 0,
+//             source_type: 'fastapi_ocr',
+//             processingMethod: imageResult.metadata?.processingMethod || 'fastapi_ocr',
+//             language: imageResult.metadata?.language || 'eng',
+//             wordCount: chunk.split(/\s+/).filter(word => word.trim().length > 0).length
+//           }
+//         }));
+
+//         const { error: chunkError } = await supabase
+//           .from('content_chunks')
+//           .insert(chunkInserts);
+
+//         if (chunkError) {
+//           console.error('Warning: Failed to save chunks:', chunkError);
+//         } else {
+//           console.log('✅ Chunks saved to database');
+//         }
+//       }
+
+//       processingResult = {
+//         processed: true,
+//         chunks_created: imageResult.chunks?.length || 0,
+//         confidence: imageResult.confidence || 0,
+//         processing_method: imageResult.metadata?.processingMethod || 'fastapi_ocr',
+//         word_count: imageResult.metadata?.wordCount || 0,
+//         text_length: imageResult.text?.length || 0,
+//         language: imageResult.metadata?.language || 'eng',
+//         enhanced: imageResult.metadata?.enhanced || false,
+//         processing_time_ms: imageResult.metadata?.processingTimeMs || 0,
+//         message: imageResult.confidence > 0 
+//           ? `FastAPI OCR completed successfully! Confidence: ${imageResult.confidence.toFixed(1)}% (${imageResult.metadata?.wordCount || 0} words extracted)`
+//           : 'Image processed (FastAPI OCR service configuration needed)'
+//       }
+//     } else {
+//       // Handle processing failure
+//       await supabase
+//         .from('training_data')
+//         .update({ 
+//           processing_status: 'failed',
+//           processing_error: imageResult.error
+//         })
+//         .eq('id', trainingData.id)
+
+//       processingResult = {
+//         processed: false,
+//         error: imageResult.error,
+//         processing_method: 'fastapi_ocr_failed',
+//         message: 'FastAPI OCR processing failed.'
+//       }
+//     }
+//   } catch (error) {
+//     console.error('❌ Image processing error:', error)
+//     await supabase
+//       .from('training_data')
+//       .update({ 
+//         processing_status: 'failed',
+//         processing_error: error.message
+//       })
+//       .eq('id', trainingData.id)
+
+//     processingResult = {
+//       processed: false,
+//       error: error.message,
+//       message: 'Image upload failed.'
+//     }
+//   }
+//   console.log('=== FASTAPI OCR PROCESSING END ===')
+// }
 
 
+
+// Replace the image processing section in your app/api/upload/route.js
+// Find this part and replace it:
+
+} else if (file.type.startsWith('image/')) {
+  console.log('=== DIRECT FASTAPI OCR PROCESSING START ===')
+  console.log('This is an image file, attempting FastAPI OCR processing...')
+  
+  try {
+    // Update status to processing
+    await supabase
+      .from('training_data')
+      .update({ processing_status: 'processing' })
+      .eq('id', trainingData.id)
+
+    console.log('Status updated to processing')
+
+    let imageResult;
+    
+    // 🆕 DIRECT FastAPI OCR - No separate processor needed
+    try {
+      console.log('🔍 Calling FastAPI OCR service directly...')
+      
+      // Get form parameters
+      const method = formData.get('method') || 'auto';
+      const language = formData.get('language') || 'auto';
+      const enhance = formData.get('enhance') !== 'false';
+      const postProcess = formData.get('post_process') !== 'false';
+      
+      console.log('📤 OCR Parameters:', { method, language, enhance, postProcess });
+
+      // Create form data for Python service
+      const ocrFormData = new FormData();
+      const imageBlob = new Blob([buffer], { type: file.type });
+      ocrFormData.append('file', imageBlob, file.name);
+      ocrFormData.append('method', method === 'auto' ? 'easyocr' : method); // Force EasyOCR
+      ocrFormData.append('language', language === 'auto' ? 'en' : language);
+      ocrFormData.append('enhance', enhance.toString());
+      ocrFormData.append('post_process', postProcess.toString());
+
+      console.log('🚀 Sending request to FastAPI OCR...');
+
+      // Call FastAPI OCR service
+      const ocrResponse = await fetch('http://localhost:8002/ocr', {
+        method: 'POST',
+        body: ocrFormData,
+      });
+
+      console.log('📥 FastAPI OCR response status:', ocrResponse.status);
+
+      if (!ocrResponse.ok) {
+        throw new Error(`FastAPI OCR service error: ${ocrResponse.status} ${ocrResponse.statusText}`);
+      }
+
+      const ocrResult = await ocrResponse.json();
+      console.log('✅ FastAPI OCR result received:', {
+        success: ocrResult.success,
+        method: ocrResult.method_used,
+        confidence: ocrResult.confidence,
+        textLength: ocrResult.text?.length || 0,
+        wordCount: ocrResult.word_count
+      });
+
+      if (ocrResult.success) {
+        // Create chunks from the text
+        const chunks = [];
+        if (ocrResult.text && ocrResult.text.trim()) {
+          const chunkSize = 800;
+          const words = ocrResult.text.split(/\s+/);
+          let currentChunk = '';
+          
+          for (const word of words) {
+            if ((currentChunk + ' ' + word).length > chunkSize && currentChunk.length > 0) {
+              chunks.push(currentChunk.trim());
+              currentChunk = word;
+            } else {
+              currentChunk = currentChunk ? currentChunk + ' ' + word : word;
+            }
+          }
+          
+          if (currentChunk.trim()) {
+            chunks.push(currentChunk.trim());
+          }
+        }
+
+        // Prepare enhanced metadata
+        const enhancedMetadata = {
+          enhanced: enhance,
+          fileType: "image_fastapi_ocr",
+          language: ocrResult.language || language,
+          wordCount: ocrResult.word_count || 0,
+          chunkCount: chunks.length,
+          avgConfidence: ocrResult.confidence || 0,
+          serviceMetadata: {
+            file_size: buffer.length,
+            original_filename: file.name,
+            image_dimensions: [0, 0], // You can get this from the image if needed
+            processed_dimensions: [0, 0],
+            raw_text_length: ocrResult.text?.length || 0,
+            processed_text_length: ocrResult.text?.length || 0,
+            ocr_method: ocrResult.method_used || method,
+            enhancement_applied: enhance,
+            processing_time_ms: (ocrResult.processing_time || 0) * 1000
+          },
+          processingMethod: ocrResult.method_used || "fastapi_ocr",
+          processingTimeMs: (ocrResult.processing_time || 0) * 1000,
+          qualityReport: ocrResult.quality_report || null,
+          pythonProcessingTime: ocrResult.processing_time || 0
+        };
+
+        imageResult = {
+          success: true,
+          text: ocrResult.text || '',
+          chunks: chunks,
+          confidence: ocrResult.confidence || 0,
+          metadata: enhancedMetadata
+        };
+
+        console.log('✅ Image processing successful with FastAPI OCR!');
+        
+      } else {
+        throw new Error(ocrResult.error || 'FastAPI OCR processing failed');
+      }
+      
+    } catch (ocrError) {
+      console.log('⚠️ FastAPI OCR failed, creating fallback response:', ocrError.message);
+      
+      // Fallback response when OCR service is not available
+      imageResult = {
+        success: true,
+        text: `[IMAGE UPLOADED - OCR Service Error]
+
+This image has been uploaded successfully but OCR processing failed.
+
+File: ${file.name}
+Size: ${formatFileSize(buffer.length)}
+Type: ${file.type}
+Upload Time: ${new Date().toLocaleString()}
+
+Error: ${ocrError.message}
+
+To fix OCR processing:
+1. Ensure Python FastAPI service is running on port 8002
+2. Check EasyOCR installation: pip install easyocr
+3. Verify service health at: http://localhost:8002/health`,
+        chunks: [],
+        confidence: 0,
+        metadata: {
+          processingMethod: 'service_unavailable',
+          ocrAttempted: true,
+          error: ocrError.message,
+          serviceUrl: 'http://localhost:8002/ocr',
+          fileType: 'image_upload_fallback',
+          wordCount: 0,
+          enhanced: false
+        }
+      };
+    }
+
+    if (imageResult.success) {
+      console.log('✅ Image OCR processing completed!');
+      console.log('- Processing method:', imageResult.metadata?.processingMethod || 'unknown');
+      console.log('- Text length:', imageResult.text?.length || 0);
+      console.log('- Confidence:', imageResult.confidence || 'N/A');
+      console.log('- Chunks created:', imageResult.chunks?.length || 0);
+      console.log('- Word count:', imageResult.metadata?.wordCount || 0);
+
+      // Update training data with processed content
+      await supabase
+        .from('training_data')
+        .update({
+          content: imageResult.text,
+          processing_status: 'completed',
+          processed_at: new Date().toISOString(),
+          chunk_count: imageResult.chunks?.length || 0,
+          metadata: imageResult.metadata || {}
+        })
+        .eq('id', trainingData.id)
+
+      // Store chunks if available
+      if (imageResult.chunks && imageResult.chunks.length > 0) {
+        const chunkInserts = imageResult.chunks.map((chunk, index) => ({
+          training_data_id: trainingData.id,
+          content: chunk,
+          chunk_index: index,
+          metadata: { 
+            confidence: imageResult.confidence || 0,
+            source_type: 'fastapi_ocr',
+            processingMethod: imageResult.metadata?.processingMethod || 'fastapi_ocr',
+            language: imageResult.metadata?.language || 'en',
+            wordCount: chunk.split(/\s+/).filter(word => word.trim().length > 0).length
+          }
+        }));
+
+        const { error: chunkError } = await supabase
+          .from('content_chunks')
+          .insert(chunkInserts);
+
+        if (chunkError) {
+          console.error('Warning: Failed to save chunks:', chunkError);
+        } else {
+          console.log('✅ Chunks saved to database');
+        }
+      }
+
+      const isServiceAvailable = imageResult.metadata?.processingMethod !== 'service_unavailable';
+      const confidence = imageResult.confidence || 0;
+
+      processingResult = {
+        processed: true,
+        chunks_created: imageResult.chunks?.length || 0,
+        confidence: confidence,
+        processing_method: imageResult.metadata?.processingMethod || 'fastapi_ocr',
+        word_count: imageResult.metadata?.wordCount || 0,
+        text_length: imageResult.text?.length || 0,
+        language: imageResult.metadata?.language || 'en',
+        enhanced: imageResult.metadata?.enhanced || false,
+        processing_time_ms: imageResult.metadata?.processingTimeMs || 0,
+        service_available: isServiceAvailable,
+        message: isServiceAvailable && confidence > 0 
+          ? `FastAPI OCR completed successfully! Confidence: ${confidence.toFixed(1)}% (${imageResult.metadata?.wordCount || 0} words extracted)`
+          : isServiceAvailable 
+          ? 'Image processed with FastAPI OCR (low confidence - try a clearer image)'
+          : 'Image uploaded (FastAPI OCR service needs configuration)'
+      }
+    } else {
+      // Handle processing failure
+      await supabase
+        .from('training_data')
+        .update({ 
+          processing_status: 'failed',
+          processing_error: imageResult.error || 'Unknown OCR error'
+        })
+        .eq('id', trainingData.id)
+
+      processingResult = {
+        processed: false,
+        error: imageResult.error || 'OCR processing failed',
+        processing_method: 'fastapi_ocr_failed',
+        message: 'Image OCR processing failed.'
+      }
+    }
+  } catch (error) {
+    console.error('❌ Image processing error:', error)
+    await supabase
+      .from('training_data')
+      .update({ 
+        processing_status: 'failed',
+        processing_error: error.message
+      })
+      .eq('id', trainingData.id)
+
+    processingResult = {
+      processed: false,
+      error: error.message,
+      message: 'Image upload failed.'
+    }
+  }
+  console.log('=== DIRECT FASTAPI OCR PROCESSING END ===')
+}
+
+// Helper function (add this at the top of your file)
+function formatFileSize(bytes) {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
 
 
 
