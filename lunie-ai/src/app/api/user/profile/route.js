@@ -1,6 +1,3 @@
-// 🔧 API ROUTE 1: User Profile API
-// src/app/api/user/profile/route.js
-
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -53,11 +50,16 @@ export async function PUT(request) {
     const body = await request.json()
     const { full_name, email } = body
 
+    // Validate input
+    if (!full_name?.trim()) {
+      return NextResponse.json({ error: 'Full name is required' }, { status: 400 })
+    }
+
     // Update profile
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
-        full_name,
+        full_name: full_name.trim(),
         updated_at: new Date().toISOString()
       })
       .eq('id', user.id)

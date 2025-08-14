@@ -1,9 +1,6 @@
-
-// 🔧 API ROUTE 2: Password Update API
-// src/app/api/user/password/route.js
-
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function PUT(request) {
   const supabase = createRouteHandlerClient({ cookies })
@@ -18,6 +15,7 @@ export async function PUT(request) {
     const body = await request.json()
     const { currentPassword, newPassword } = body
 
+    // Validate input
     if (!currentPassword || !newPassword) {
       return NextResponse.json({ error: 'Current and new passwords are required' }, { status: 400 })
     }

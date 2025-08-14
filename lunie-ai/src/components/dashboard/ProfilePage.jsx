@@ -265,53 +265,113 @@ const handleProfileUpdate = async (e) => {
   }
 }
 
+
+
+
   const handlePasswordUpdate = async (e) => {
-    e.preventDefault()
-    setSaving(true)
+      e.preventDefault()
+      setSaving(true)
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match')
-      setSaving(false)
-      return
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters')
-      setSaving(false)
-      return
-    }
-
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwordForm.currentPassword
-      })
-
-      if (signInError) {
-        throw new Error('Current password is incorrect')
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        toast.error('New passwords do not match')
+        setSaving(false)
+        return
       }
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: passwordForm.newPassword
-      })
-
-      if (updateError) {
-        throw updateError
+      if (passwordForm.newPassword.length < 6) {
+        toast.error('New password must be at least 6 characters')
+        setSaving(false)
+        return
       }
 
-      toast.success('Password updated successfully!')
-      setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      })
+      try {
+       const response = await fetch('/api/user/password', {
+         method: 'PUT',
+         headers: {
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({
+           currentPassword: passwordForm.currentPassword,
+           newPassword: passwordForm.newPassword
+         })
+       })
 
-    } catch (error) {
-      toast.error(error.message || 'Failed to update password')
-    } finally {
-      setSaving(false)
+       const data = await response.json()
+
+       if (!response.ok) {
+         throw new Error(data.error || 'Failed to update password')
+       }
+
+        toast.success('Password updated successfully!')
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+
+      } catch (error) {
+      console.error('Password update error:', error)
+        toast.error(error.message || 'Failed to update password')
+      } finally {
+        setSaving(false)
+      }
     }
-  }
+
+
+
+
+
+
+
+
+
+  // const handlePasswordUpdate = async (e) => {
+  //   e.preventDefault()
+  //   setSaving(true)
+
+  //   if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+  //     toast.error('New passwords do not match')
+  //     setSaving(false)
+  //     return
+  //   }
+
+  //   if (passwordForm.newPassword.length < 6) {
+  //     toast.error('New password must be at least 6 characters')
+  //     setSaving(false)
+  //     return
+  //   }
+
+  //   try {
+  //     const { error: signInError } = await supabase.auth.signInWithPassword({
+  //       email: user.email,
+  //       password: passwordForm.currentPassword
+  //     })
+
+  //     if (signInError) {
+  //       throw new Error('Current password is incorrect')
+  //     }
+
+  //     const { error: updateError } = await supabase.auth.updateUser({
+  //       password: passwordForm.newPassword
+  //     })
+
+  //     if (updateError) {
+  //       throw updateError
+  //     }
+
+  //     toast.success('Password updated successfully!')
+  //     setPasswordForm({
+  //       currentPassword: '',
+  //       newPassword: '',
+  //       confirmPassword: ''
+  //     })
+
+  //   } catch (error) {
+  //     toast.error(error.message || 'Failed to update password')
+  //   } finally {
+  //     setSaving(false)
+  //   }
+  // }
 
   const getInitials = (name) => {
     return name

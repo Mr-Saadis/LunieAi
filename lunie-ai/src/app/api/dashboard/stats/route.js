@@ -1,6 +1,6 @@
-
-// 🔧 API ROUTE 3: Dashboard Stats API
-// src/app/api/dashboard/stats/route.js
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 export async function GET() {
   const supabase = createRouteHandlerClient({ cookies })
@@ -12,26 +12,33 @@ export async function GET() {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // Get chatbots count
-    const { count: chatbotsCount } = await supabase
-      .from('chatbots')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-
-    // Get training data count
-    const { count: trainingDataCount } = await supabase
-      .from('training_data')
-      .select(`
-        *,
-        chatbots!inner(user_id)
-      `, { count: 'exact', head: true })
-      .eq('chatbots.user_id', user.id)
-
-    // Get conversations count
-    const { data: chatbots } = await supabase
-      .from('chatbots')
-      .select('total_conversations')
-      .eq('user_id', user.id)
+    // Run queries in parallel for better performance
+    const [
+      { count: chatbotsCount },
+      { count: trainingDataCount },
+      { data: chatbots }
+    ] = await Promise.all([
+      // Get chatbots count
+      supabase
+        .from('chatbots')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id),
+      
+      // Get training data count
+      supabase
+        .from('training_data')
+        .select(`
+          *,
+          chatbots!inner(user_id)
+        `, { count: 'exact', head: true })
+        .eq('chatbots.user_id', user.id),
+      
+      // Get chatbots with conversation counts
+      supabase
+        .from('chatbots')
+        .select('total_conversations')
+        .eq('user_id', user.id)
+    ])
 
     const totalConversations = chatbots?.reduce(
       (sum, chatbot) => sum + (chatbot.total_conversations || 0), 
@@ -42,7 +49,7 @@ export async function GET() {
       chatbots: chatbotsCount || 0,
       conversations: totalConversations,
       trainingData: trainingDataCount || 0,
-      messages: 0
+      messages: 0 // Will be calculated from conversations if needed
     }
 
     return NextResponse.json(stats)

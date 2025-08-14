@@ -252,46 +252,39 @@ export default function DashboardHome() {
     fetchData()
   }, [supabase])
 
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
+      const fetchData = async () => {
+     try {
+       setLoading(true)
 
-    if (user) {
-      // Get profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+       // Fetch user profile
+       const profileResponse = await fetch('/api/user/profile')
+       if (profileResponse.ok) {
+         const profileData = await profileResponse.json()
+         setUser(profileData.user)
+         setProfile(profileData.profile)
+       }
 
-      setProfile(profile)
+       // Fetch dashboard stats
+       const statsResponse = await fetch('/api/dashboard/stats')
+       if (statsResponse.ok) {
+         const statsData = await statsResponse.json()
+         setStats(statsData)
+       }
 
-      // Get chatbots with additional data
-      const { data: chatbotsData } = await supabase
-        .from('chatbots')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
+       // Fetch recent chatbots
+       const chatbotsResponse = await fetch('/api/chatbots?limit=6')
+       if (chatbotsResponse.ok) {
+         const chatbotsData = await chatbotsResponse.json()
+         setChatbots(chatbotsData.chatbots || [])
+       }
 
-      setChatbots(chatbotsData || [])
-
-      // Get training data count
-      const { data: trainingData } = await supabase
-        .from('training_data')
-        .select('id')
-        .eq('chatbot_id', chatbotsData?.[0]?.id)
-
-      setStats({
-        chatbots: chatbotsData?.length || 0,
-        conversations: Math.floor(Math.random() * 200) + 50,
-        messages: Math.floor(Math.random() * 2000) + 500,
-        trainingData: trainingData?.length || 0
-      })
+     } catch (error) {
+       console.error('Error fetching dashboard data:', error)
+       toast.error('Failed to load dashboard data')
+     } finally {
+       setLoading(false)
+     }
     }
-
-    setLoading(false)
-    setRefreshing(false)
-  }
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -300,7 +293,7 @@ export default function DashboardHome() {
   }
 
   const handleChatbotSelect = (chatbotId) => {
-    router.push(`/dashboard/${chatbotId}/training`)
+    router.push(`/dashboard/${chatbotId}/overview`)
   }
 
   const duplicateChatbot = async (chatbot) => {
