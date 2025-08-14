@@ -1,6 +1,4 @@
-// ===========================================
 // app/api/process/pdf/route.js
-// ===========================================
 
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';

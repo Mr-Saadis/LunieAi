@@ -1,7 +1,4 @@
-
-// ===========================================
-// app/api/files/download/[id]/route.js (BONUS)
-// ===========================================
+// app/api/files/download/[id]/route.js
 
 export async function GET(request, { params }) {
   const supabase = createRouteHandlerClient({ cookies });

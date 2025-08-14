@@ -80,10 +80,3 @@ export function WelcomeMessage({ user }) {
     </Card>
   )
 }
-
-// Update your src/components/dashboard/DashboardHome.jsx
-// Add this import at the top:
-// import { WelcomeMessage } from './WelcomeMessage'
-
-// And add this component right after the welcome header:
-// <WelcomeMessage user={user} profile={profile} />

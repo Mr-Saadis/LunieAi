@@ -653,3 +653,140 @@ export const batchDeleteTrainingData = async (trainingDataIds, userId) => {
 
   return { success: true, deletedCount: trainingDataIds.length }
 }
+
+// lib/supabase/mutations.js - ADD THESE FUNCTIONS TO YOUR EXISTING FILE
+
+// =============================================================================
+// TEXT CONTENT MUTATIONS
+// =============================================================================
+
+export const createTextContent = async (chatbotId, textData) => {
+  try {
+    const response = await fetch('/api/training-data/text', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chatbotId,
+        title: textData.title,
+        content: textData.content
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create text content')
+    }
+
+    return result.data
+  } catch (error) {
+    console.error('Error creating text content:', error)
+    throw error
+  }
+}
+
+// =============================================================================
+// Q&A PAIRS MUTATIONS (Updated to use API)
+// =============================================================================
+
+export const createQAPairAPI = async (chatbotId, qaData) => {
+  try {
+    const response = await fetch('/api/qa-pairs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chatbotId,
+        question: qaData.question,
+        answer: qaData.answer,
+        category: qaData.category,
+        is_active: qaData.is_active
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to create Q&A pair')
+    }
+
+    return result.data
+  } catch (error) {
+    console.error('Error creating Q&A pair:', error)
+    throw error
+  }
+}
+
+export const updateQAPairAPI = async (qaPairId, updates) => {
+  try {
+    const response = await fetch(`/api/qa-pairs/${qaPairId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to update Q&A pair')
+    }
+
+    return result.data
+  } catch (error) {
+    console.error('Error updating Q&A pair:', error)
+    throw error
+  }
+}
+
+export const deleteQAPairAPI = async (qaPairId) => {
+  try {
+    const response = await fetch(`/api/qa-pairs/${qaPairId}`, {
+      method: 'DELETE',
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete Q&A pair')
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting Q&A pair:', error)
+    throw error
+  }
+}
+
+export const getQAPairs = async (chatbotId) => {
+  try {
+    const response = await fetch(`/api/qa-pairs?chatbotId=${chatbotId}`)
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to fetch Q&A pairs')
+    }
+
+    return result.data
+  } catch (error) {
+    console.error('Error fetching Q&A pairs:', error)
+    throw error
+  }
+}
+
+// =============================================================================
+// TRAINING DATA MUTATIONS
+
+export const createTrainingDataEnhanced = async (chatbotId, userId, trainingData) => {
+  // For text type, use the new API
+  if (trainingData.type === 'text') {
+    return await createTextContent(chatbotId, trainingData)
+  }
+  
+  // For other types, use the existing function
+  return await createTrainingData(chatbotId, userId, trainingData)
+}
