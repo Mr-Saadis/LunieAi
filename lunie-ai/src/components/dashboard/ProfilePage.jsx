@@ -116,78 +116,154 @@ export default function ProfilePage() {
 
   const supabase = createClient()
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const { data: { user }, error } = await supabase.auth.getUser()
+
+  //     if (error || !user) {
+  //       toast.error('Please log in to access your profile')
+  //       return
+  //     }
+
+  //     setUser(user)
+
+  //     const { data: profile, error: profileError } = await supabase
+  //       .from('profiles')
+  //       .select('*')
+  //       .eq('id', user.id)
+  //       .single()
+
+  //     if (profile) {
+  //       setProfile(profile)
+  //       setProfileForm({
+  //         full_name: profile.full_name || '',
+  //         email: user.email || ''
+  //       })
+  //     }
+
+  //     setLoading(false)
+  //   }
+
+  //   fetchData()
+  // }, [supabase])
+
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
+      try {
+        const response = await fetch('/api/user/profile')
 
-      if (error || !user) {
-        toast.error('Please log in to access your profile')
-        return
-      }
+        if (!response.ok) {
+          if (response.status === 401) {
+            toast.error('Please log in to access your profile')
+            return
+          }
+          throw new Error('Failed to fetch profile')
+        }
 
-      setUser(user)
+        const data = await response.json()
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profile) {
-        setProfile(profile)
+        setUser(data.user)
+        setProfile(data.profile)
         setProfileForm({
-          full_name: profile.full_name || '',
-          email: user.email || ''
+          full_name: data.profile?.full_name || '',
+          email: data.user?.email || ''
         })
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+        toast.error('Failed to load profile data')
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     fetchData()
-  }, [supabase])
+  }, [])
 
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault()
-    setSaving(true)
 
-    try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileForm.full_name,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id)
+  // const handleProfileUpdate = async (e) => {
+  //   e.preventDefault()
+  //   setSaving(true)
 
-      if (profileError) throw profileError
+  //   try {
+  //     const { error: profileError } = await supabase
+  //       .from('profiles')
+  //       .update({
+  //         full_name: profileForm.full_name,
+  //         updated_at: new Date().toISOString()
+  //       })
+  //       .eq('id', user.id)
 
-      if (profileForm.email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: profileForm.email
-        })
+  //     if (profileError) throw profileError
 
-        if (emailError) throw emailError
+  //     if (profileForm.email !== user.email) {
+  //       const { error: emailError } = await supabase.auth.updateUser({
+  //         email: profileForm.email
+  //       })
 
-        toast.success('Profile updated! Please check your email to confirm the new address.')
-      } else {
-        toast.success('Profile updated successfully!')
-      }
+  //       if (emailError) throw emailError
 
-      const { data: updatedProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+  //       toast.success('Profile updated! Please check your email to confirm the new address.')
+  //     } else {
+  //       toast.success('Profile updated successfully!')
+  //     }
 
-      setProfile(updatedProfile)
+  //     const { data: updatedProfile } = await supabase
+  //       .from('profiles')
+  //       .select('*')
+  //       .eq('id', user.id)
+  //       .single()
 
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile')
-    } finally {
-      setSaving(false)
+  //     setProfile(updatedProfile)
+
+  //   } catch (error) {
+  //     toast.error(error.message || 'Failed to update profile')
+  //   } finally {
+  //     setSaving(false)
+  //   }
+  // }
+const handleProfileUpdate = async (e) => {
+  e.preventDefault()
+  setSaving(true)
+
+  try {
+    const response = await fetch('/api/user/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        full_name: profileForm.full_name,
+        email: profileForm.email
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update profile')
     }
+
+    if (profileForm.email !== user.email) {
+      toast.success('Profile updated! Please check your email to confirm the new address.')
+    } else {
+      toast.success('Profile updated successfully!')
+    }
+    
+    // Refresh profile data
+    const profileResponse = await fetch('/api/user/profile')
+    if (profileResponse.ok) {
+      const updatedData = await profileResponse.json()
+      setUser(updatedData.user)
+      setProfile(updatedData.profile)
+    }
+
+  } catch (error) {
+    console.error('Profile update error:', error)
+    toast.error(error.message || 'Failed to update profile')
+  } finally {
+    setSaving(false)
   }
+}
 
   const handlePasswordUpdate = async (e) => {
     e.preventDefault()
@@ -308,12 +384,12 @@ export default function ProfilePage() {
                       <Camera className="w-3 h-3" />
                     </Button>
                   </div>
-                  
+
                   <div className="text-center mt-4 space-y-1">
                     <h3 className="font-semibold text-gray-900 text-lg">{profile?.full_name || 'User'}</h3>
                     <p className="text-sm text-gray-600">{user?.email}</p>
                     <div className="flex items-center justify-center mt-3">
-                      <Badge 
+                      <Badge
                         className={`${currentPlan?.bgColor} ${currentPlan?.color} border-0 font-medium`}
                       >
                         {currentPlan?.name === 'Enterprise' && <Crown className="w-3 h-3 mr-1" />}
@@ -395,9 +471,9 @@ export default function ProfilePage() {
                   </p>
                 </div>
 
-                <Button 
-                  size="sm" 
-                  className="w-full bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] hover:from-[#94B9F9]/90 hover:to-[#F4CAF7]/90" 
+                <Button
+                  size="sm"
+                  className="w-full bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] hover:from-[#94B9F9]/90 hover:to-[#F4CAF7]/90"
                   disabled
                 >
                   <Zap className="w-4 h-4 mr-2" />
@@ -423,9 +499,9 @@ export default function ProfilePage() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Member since</span>
                   <span className="text-gray-900 font-medium">
-                    {new Date(profile?.created_at || Date.now()).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'short' 
+                    {new Date(profile?.created_at || Date.now()).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short'
                     })}
                   </span>
                 </div>
@@ -502,9 +578,9 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="flex justify-end">
-                        <Button 
-                          type="submit" 
-                          disabled={saving} 
+                        <Button
+                          type="submit"
+                          disabled={saving}
                           className="bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] hover:from-[#94B9F9]/90 hover:to-[#F4CAF7]/90"
                         >
                           {saving ? (
@@ -606,9 +682,9 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="flex justify-end">
-                        <Button 
-                          type="submit" 
-                          disabled={saving} 
+                        <Button
+                          type="submit"
+                          disabled={saving}
                           className="bg-[#94B9F9] hover:bg-[#94B9F9]/90"
                         >
                           {saving ? (
@@ -649,7 +725,7 @@ export default function ProfilePage() {
                           Popular
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center">
                           {currentPlan?.name === 'Enterprise' && <Crown className="w-6 h-6 mr-3 text-[#FB8A8F]" />}
@@ -700,8 +776,8 @@ export default function ProfilePage() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {plans.filter(plan => plan.name !== currentPlan?.name).map((plan, index) => (
-                        <div 
-                          key={index} 
+                        <div
+                          key={index}
                           className={`p-5 rounded-xl border-2 ${plan.borderColor} ${plan.bgColor} hover:shadow-sm transition-all duration-200 relative`}
                         >
                           {plan.popular && (
@@ -712,7 +788,7 @@ export default function ProfilePage() {
                               </Badge>
                             </div>
                           )}
-                          
+
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
                               {plan.name === 'Enterprise' && <Crown className="w-5 h-5 mr-2 text-[#FB8A8F]" />}
@@ -738,9 +814,9 @@ export default function ProfilePage() {
                             ))}
                           </div>
 
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
+                          <Button
+                            size="sm"
+                            variant="outline"
                             className={`w-full ${plan.popular ? 'border-[#94B9F9] text-[#94B9F9] hover:bg-[#94B9F9] hover:text-white' : 'border-gray-300 hover:bg-gray-50'}`}
                             disabled
                           >
@@ -750,7 +826,7 @@ export default function ProfilePage() {
                         </div>
                       ))}
                     </div>
-                    
+
                     <div className="mt-6 p-4 bg-gradient-to-r from-[#94B9F9]/5 to-[#F4CAF7]/5 rounded-lg border border-[#94B9F9]/20">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] rounded-lg flex items-center justify-center">

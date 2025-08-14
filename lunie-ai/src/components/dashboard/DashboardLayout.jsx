@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+// import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image' // 🔧 FIX: Added missing import
@@ -95,41 +95,92 @@ export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
+  // const supabase = createClient()
+
+  // useEffect(() => {
+  //   const getUser = async () => {
+  //     const { data: { user }, error } = await supabase.auth.getUser()
+      
+  //     if (error || !user) {
+  //       router.push('/auth/login')
+  //       return
+  //     }
+
+  //     setUser(user)
+
+  //     const { data: profile } = await supabase
+  //       .from('profiles')
+  //       .select('*')
+  //       .eq('id', user.id)
+  //       .single()
+
+  //     setProfile(profile)
+  //     setLoading(false)
+  //   }
+
+  //   getUser()
+  // }, [router, supabase])
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser()
+  const getUser = async () => {
+    try {
+      const response = await fetch('/api/user/profile')
       
-      if (error || !user) {
-        router.push('/auth/login')
-        return
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/auth/login')
+          return
+        }
+        throw new Error('Failed to fetch user data')
       }
 
-      setUser(user)
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      setProfile(profile)
+      const data = await response.json()
+      setUser(data.user)
+      setProfile(data.profile)
+    } catch (error) {
+      console.error('Error fetching user data:', error)
+      router.push('/auth/login')
+    } finally {
       setLoading(false)
     }
+  }
 
-    getUser()
-  }, [router, supabase])
+  getUser()
+}, [router])
 
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      toast.error('Error signing out')
-    } else {
+
+
+
+  // const handleSignOut = async () => {
+  //   const { error } = await supabase.auth.signOut()
+  //   if (error) {
+  //     toast.error('Error signing out')
+  //   } else {
+  //     toast.success('Signed out successfully')
+  //     router.push('/auth/login')
+  //   }
+  // }
+
+
+
+const handleSignOut = async () => {
+  try {
+    const response = await fetch('/api/auth/signout', { method: 'POST' })
+    
+    if (response.ok) {
       toast.success('Signed out successfully')
       router.push('/auth/login')
+    } else {
+      throw new Error('Sign out failed')
     }
+  } catch (error) {
+    console.error('Sign out error:', error)
+    toast.error('Error signing out')
+    
+    // Force redirect anyway
+    router.push('/auth/login')
   }
+}
 
   // 🔧 FIX: Improved ParrotLogo component with better styling
   const ParrotLogo = ({ className = "w-10 h-10" }) => (
