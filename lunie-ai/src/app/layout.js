@@ -1,14 +1,12 @@
-// src/app/layout.js - Alternative with proper font loading
+// src/app/layout.js 
 import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
 
-// Try importing with different options
-import { Inter } from 'next/font/google'
-
-const inter = Inter({ 
+import { Poppins } from 'next/font/google'
+const poppins = Poppins({
   subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
-  fallback: ['system-ui', 'arial']
 })
 
 export const metadata = {
@@ -19,7 +17,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${poppins.className} bg-gray-50 text-gray-900 antialiased`}>
         {children}
         <Toaster richColors position="top-right" />
       </body>

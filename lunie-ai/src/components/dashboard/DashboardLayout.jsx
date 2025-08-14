@@ -2,10 +2,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-// import { createClient } from '@/lib/supabase/client'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image' // 🔧 FIX: Added missing import
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { 
@@ -95,31 +94,6 @@ export default function DashboardLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  // const supabase = createClient()
-
-  // useEffect(() => {
-  //   const getUser = async () => {
-  //     const { data: { user }, error } = await supabase.auth.getUser()
-      
-  //     if (error || !user) {
-  //       router.push('/auth/login')
-  //       return
-  //     }
-
-  //     setUser(user)
-
-  //     const { data: profile } = await supabase
-  //       .from('profiles')
-  //       .select('*')
-  //       .eq('id', user.id)
-  //       .single()
-
-  //     setProfile(profile)
-  //     setLoading(false)
-  //   }
-
-  //   getUser()
-  // }, [router, supabase])
 
   useEffect(() => {
   const getUser = async () => {
@@ -151,16 +125,6 @@ export default function DashboardLayout({ children }) {
 
 
 
-  // const handleSignOut = async () => {
-  //   const { error } = await supabase.auth.signOut()
-  //   if (error) {
-  //     toast.error('Error signing out')
-  //   } else {
-  //     toast.success('Signed out successfully')
-  //     router.push('/auth/login')
-  //   }
-  // }
-
 
 
 const handleSignOut = async () => {
@@ -182,7 +146,6 @@ const handleSignOut = async () => {
   }
 }
 
-  // 🔧 FIX: Improved ParrotLogo component with better styling
   const ParrotLogo = ({ className = "w-10 h-10" }) => (
     <div className={`${className} relative flex items-center justify-center`}>
       <Image
@@ -432,7 +395,7 @@ const handleSignOut = async () => {
       {/* 📄 MAIN CONTENT */}
       <div className="flex-1">
         {/* Page Content */}
-        <main className="px-4 sm:px-6 lg:px-8 py-8">
+        <main className="px-2 sm:px-3 lg:px-4 py-6">
           {children}
         </main>
       </div>

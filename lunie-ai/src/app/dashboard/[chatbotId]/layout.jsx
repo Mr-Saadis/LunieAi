@@ -1,4 +1,4 @@
-// src/app/dashboard/[chatbotId]/layout.jsx - CHATBOT-SPECIFIC LAYOUT
+// src/app/dashboard/[chatbotId]/layout.jsx 
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -457,46 +457,24 @@ export default function ChatbotLayout({ children }) {
             </div>
 
             {/* Chatbot Info */}
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="px-1 py-1 border-b border-gray-100">
 
               <div className="flex items-center space-x-3">
 
 
 
-                <div className="px-4 py-4 border-b border-gray-100">
+                <div className="px-1 py-2 border-b border-gray-100">
                   <ChatbotSwitcher
                     currentChatbot={chatbot}
                     chatbots={userChatbots}
                     onChatbotChange={handleChatbotChange}
                   />
                 </div>
-
-
-
-{/* 
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
-                  style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
-                >
-                  <ChatIconComponent className="w-5 h-5 text-white" />
-                </div> */}
-
-                {/* <div className="w-10 h-10 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center shadow-sm">
-                  <Bot className="w-5 h-5 text-white" />
-                </div> */}
-                {/* <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-semibold text-gray-900 truncate">{chatbot.name}</h2>
-                  <div className="flex items-center mt-1">
-                    <Badge className={`text-xs ${chatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} border-0`}>
-                      {chatbot.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </div>
-                </div> */}
               </div>
             </div>
 
             {/* Chatbot Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 px-2 py-2 space-y-1">
               {chatbotNavigation.map((item) => {
                 const isActive = isChatbotPageActive(item.href)
                 return (

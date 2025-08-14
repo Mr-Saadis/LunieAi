@@ -2,7 +2,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -246,11 +245,10 @@ export default function DashboardHome() {
   const [showAllActivities, setShowAllActivities] = useState(false)
   const [showAllNotifications, setShowAllNotifications] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     fetchData()
-  }, [supabase])
+  }, [])
 
       const fetchData = async () => {
      try {
