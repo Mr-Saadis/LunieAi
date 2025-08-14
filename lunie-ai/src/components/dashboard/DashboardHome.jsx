@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { 
-  Bot, 
-  Plus, 
-  MessageSquare, 
-  Database, 
-  Users, 
+import {
+  Bot,
+  Plus,
+  MessageSquare,
+  Database,
+  Users,
   TrendingUp,
   ArrowRight,
   FileText,
@@ -49,8 +49,8 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
-import {User, Heart, Coffee, Smile, Shield, Headphones, BookOpen, Laptop, Lightbulb,Briefcase, Home, Camera, Music, Phone, Mail, ShoppingCart} from 'lucide-react'
-import { 
+import { User, Heart, Coffee, Smile, Shield, Headphones, BookOpen, Laptop, Lightbulb, Briefcase, Home, Camera, Music, Phone, Mail, ShoppingCart } from 'lucide-react'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -208,27 +208,27 @@ const notifications = [
 ]
 
 const getChatIcon = (iconName) => {
-    const IconComponent = CHAT_ICONS[iconName] || Bot
-    return IconComponent
-  }
+  const IconComponent = CHAT_ICONS[iconName] || Bot
+  return IconComponent
+}
 
-  const getThemeColorName = (color) => {
-    const colorNames = {
-      '#94B9F9': 'Blue',
-      '#F4CAF7': 'Purple',
-      '#FB8A8F': 'Coral',
-      '#10B981': 'Green',
-      '#F59E0B': 'Orange',
-      '#EF4444': 'Red',
-      '#6366F1': 'Indigo',
-      '#EC4899': 'Pink',
-      '#14B8A6': 'Teal',
-      '#06B6D4': 'Cyan',
-      '#84CC16': 'Lime',
-      '#F43F5E': 'Rose'
-    }
-    return colorNames[color] || 'Custom'
+const getThemeColorName = (color) => {
+  const colorNames = {
+    '#94B9F9': 'Blue',
+    '#F4CAF7': 'Purple',
+    '#FB8A8F': 'Coral',
+    '#10B981': 'Green',
+    '#F59E0B': 'Orange',
+    '#EF4444': 'Red',
+    '#6366F1': 'Indigo',
+    '#EC4899': 'Pink',
+    '#14B8A6': 'Teal',
+    '#06B6D4': 'Cyan',
+    '#84CC16': 'Lime',
+    '#F43F5E': 'Rose'
   }
+  return colorNames[color] || 'Custom'
+}
 
 export default function DashboardHome() {
   const [stats, setStats] = useState({
@@ -250,39 +250,93 @@ export default function DashboardHome() {
     fetchData()
   }, [])
 
-      const fetchData = async () => {
-     try {
-       setLoading(true)
+  //   const fetchData = async () => {
+  //  try {
+  //    setLoading(true)
 
-       // Fetch user profile
-       const profileResponse = await fetch('/api/user/profile')
-       if (profileResponse.ok) {
-         const profileData = await profileResponse.json()
-         setUser(profileData.user)
-         setProfile(profileData.profile)
-       }
+  //    // Fetch user profile
+  //    const profileResponse = await fetch('/api/user/profile')
+  //    if (profileResponse.ok) {
+  //      const profileData = await profileResponse.json()
+  //      setUser(profileData.user)
+  //      setProfile(profileData.profile)
+  //    }
 
-       // Fetch dashboard stats
-       const statsResponse = await fetch('/api/dashboard/stats')
-       if (statsResponse.ok) {
-         const statsData = await statsResponse.json()
-         setStats(statsData)
-       }
+  //    // Fetch dashboard stats
+  //    const statsResponse = await fetch('/api/dashboard/stats')
+  //    if (statsResponse.ok) {
+  //      const statsData = await statsResponse.json()
+  //      setStats(statsData)
+  //    }
 
-       // Fetch recent chatbots
-       const chatbotsResponse = await fetch('/api/chatbots?limit=6')
-       if (chatbotsResponse.ok) {
-         const chatbotsData = await chatbotsResponse.json()
-         setChatbots(chatbotsData.chatbots || [])
-       }
+  //    // Fetch recent chatbots
+  //    const chatbotsResponse = await fetch('/api/chatbots?limit=6')
+  //    if (chatbotsResponse.ok) {
+  //      const chatbotsData = await chatbotsResponse.json()
+  //      setChatbots(chatbotsData.chatbots || [])
+  //    }
 
-     } catch (error) {
-       console.error('Error fetching dashboard data:', error)
-       toast.error('Failed to load dashboard data')
-     } finally {
-       setLoading(false)
-     }
+  //  } catch (error) {
+  //    console.error('Error fetching dashboard data:', error)
+  //    toast.error('Failed to load dashboard data')
+  //  } finally {
+  //    setLoading(false)
+  //  }
+  // }
+
+  // Update the fetchData function in your DashboardHome.jsx
+  // Replace the existing fetchData function with this:
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch user profile
+      const profileResponse = await fetch('/api/user/profile')
+      if (profileResponse.ok) {
+        const profileData = await profileResponse.json()
+        setUser(profileData.user)
+        setProfile(profileData.profile)
+      }
+
+      // Fetch dashboard stats
+      const statsResponse = await fetch('/api/dashboard/stats')
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(statsData)
+      }
+
+      // Fetch recent chatbots - UPDATED TO HANDLE NEW API FORMAT
+      const chatbotsResponse = await fetch('/api/chatbots?limit=6')
+      if (chatbotsResponse.ok) {
+        const chatbotsData = await chatbotsResponse.json()
+
+        // Handle both old and new API response formats
+        if (chatbotsData.success && chatbotsData.data) {
+          // New refactored API format
+          setChatbots(chatbotsData.data.chatbots || [])
+        } else if (chatbotsData.chatbots) {
+          // Old API format (fallback)
+          setChatbots(chatbotsData.chatbots || [])
+        } else {
+          console.warn('Unexpected chatbots API response format:', chatbotsData)
+          setChatbots([])
+        }
+      } else {
+        console.error('Failed to fetch chatbots:', chatbotsResponse.status)
+        const errorData = await chatbotsResponse.json()
+        console.error('Error details:', errorData)
+        toast.error('Failed to load chatbots')
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      toast.error('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
     }
+  }
+
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -344,14 +398,14 @@ export default function DashboardHome() {
                         {getGreeting()}, {userName}! 👋
                       </h1>
                       <p className="text-sm sm:text-base text-gray-600 mt-1">
-                        {hasNoChatbots 
-                          ? "Ready to build your first AI chatbot?" 
+                        {hasNoChatbots
+                          ? "Ready to build your first AI chatbot?"
                           : `You have ${stats.chatbots} active chatbot${stats.chatbots !== 1 ? 's' : ''} working for you`
                         }
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* Mobile Action Buttons */}
                   <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 lg:hidden">
                     <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="w-full sm:w-auto">
@@ -380,7 +434,7 @@ export default function DashboardHome() {
                     </Button>
                   </div>
                 </div>
-                
+
                 {hasNoChatbots && (
                   <div className="flex flex-col space-y-3 sm:flex-row sm:flex-wrap sm:gap-3 sm:space-y-0 mt-6">
                     <Button asChild className="bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] hover:from-[#94B9F9]/90 hover:to-[#F4CAF7]/90 text-white shadow-lg w-full sm:w-auto">
@@ -398,7 +452,7 @@ export default function DashboardHome() {
                   </div>
                 )}
               </div>
-              
+
               {!hasNoChatbots && (
                 <div className="hidden lg:block">
                   <div className="w-24 h-24 xl:w-32 xl:h-32 bg-gradient-to-br from-[#94B9F9]/20 to-[#F4CAF7]/20 rounded-full flex items-center justify-center">
@@ -408,7 +462,7 @@ export default function DashboardHome() {
               )}
             </div>
           </div>
-          
+
           {/* Background decoration */}
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-[#F4CAF7]/30 to-[#FB8A8F]/30 rounded-full blur-xl opacity-60"></div>
           <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br from-[#94B9F9]/20 to-[#F4CAF7]/20 rounded-full blur-xl opacity-40"></div>
@@ -506,7 +560,7 @@ export default function DashboardHome() {
                     Create Your First AI Chatbot
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto leading-relaxed">
-                    Get started by creating an intelligent chatbot trained on your business data. 
+                    Get started by creating an intelligent chatbot trained on your business data.
                     Setup takes just a few minutes, and you'll be chatting with your AI assistant in no time.
                   </p>
                   <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:gap-4 justify-center">
@@ -634,96 +688,105 @@ export default function DashboardHome() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 sm:space-y-4">
+
+
+                    
+
+
+
                     {chatbots.slice(0, 3).map((chatbot) => {
-                      const ChatIconComponent = getChatIcon(chatbot.chat_icon)
-                    return(
-                      <div 
-                        key={chatbot.id}
-                        className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer group"
-                        onClick={() => handleChatbotSelect(chatbot.id)}
-                      >
-                        <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0">
-                          
-                          <div 
+                      // Use a default icon since chat_icon doesn't exist in DB yet
+                      const ChatIconComponent = getChatIcon('Bot') // Default to Bot icon
+
+                      return (
+                        <div
+                          key={chatbot.id}
+                          className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all cursor-pointer group"
+                          onClick={() => handleChatbotSelect(chatbot.id)}
+                        >
+                          <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0">
+                            <div
                               className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
                               style={{ backgroundColor: chatbot.theme_color || '#94B9F9' }}
                             >
                               <ChatIconComponent className="w-5 h-5 text-white" />
                             </div>
 
-                          {/* <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                            <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                          </div> */}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-gray-900 group-hover:text-[#94B9F9] transition-colors text-sm sm:text-base truncate">
-                              {chatbot.name}
-                            </h3>
-                            <p className="text-xs sm:text-sm text-gray-600 truncate">{chatbot.description || 'No description'}</p>
-                            <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3 mt-1 text-xs text-gray-500">
-                              <span className="flex items-center">
-                                <Clock className="w-3 h-3 mr-1" />
-                                Updated {new Date(chatbot.updated_at).toLocaleDateString()}
-                              </span>
-                              <span className="flex items-center">
-                                <MessageSquare className="w-3 h-3 mr-1" />
-                                {Math.floor(Math.random() * 50)} conversations
-                              </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-medium text-gray-900 group-hover:text-[#94B9F9] transition-colors text-sm sm:text-base truncate">
+                                {chatbot.name}
+                              </h3>
+                              <p className="text-xs sm:text-sm text-gray-600 truncate">
+                                {chatbot.description || 'No description'}
+                              </p>
+                              <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3 mt-1 text-xs text-gray-500">
+                                <span className="flex items-center">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  Updated {new Date(chatbot.updated_at).toLocaleDateString()}
+                                </span>
+                                <span className="flex items-center">
+                                  <MessageSquare className="w-3 h-3 mr-1" />
+                                  {chatbot.total_conversations || 0} conversations
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-3">
+                            <Badge className={`${chatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} border-0 text-xs`}>
+                              {chatbot.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+
+                            <div className="flex items-center space-x-1">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation()
+                                    router.push(`/dashboard/${chatbot.id}/training`)
+                                  }}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit Training
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation()
+                                    router.push(`/dashboard/${chatbot.id}/playground`)
+                                  }}>
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Test Chatbot
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation()
+                                    duplicateChatbot(chatbot)
+                                  }}>
+                                    <Copy className="w-4 h-4 mr-2" />
+                                    Duplicate
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={(e) => {
+                                    e.stopPropagation()
+                                    router.push(`/dashboard/${chatbot.id}/analytics`)
+                                  }}>
+                                    <BarChart3 className="w-4 h-4 mr-2" />
+                                    View Analytics
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#94B9F9] group-hover:translate-x-1 transition-all hidden sm:block" />
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-3">
-                          <Badge className={`${chatbot.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} border-0 text-xs`}>
-                            {chatbot.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                          
-                          <div className="flex items-center space-x-1">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/dashboard/${chatbot.id}/training`)
-                                }}>
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit Training
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/dashboard/${chatbot.id}/playground`)
-                                }}>
-                                  <Play className="w-4 h-4 mr-2" />
-                                  Test Chatbot
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation()
-                                  duplicateChatbot(chatbot)
-                                }}>
-                                  <Copy className="w-4 h-4 mr-2" />
-                                  Duplicate
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/dashboard/${chatbot.id}/analytics`)
-                                }}>
-                                  <BarChart3 className="w-4 h-4 mr-2" />
-                                  View Analytics
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            
-                            <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#94B9F9] group-hover:translate-x-1 transition-all hidden sm:block" />
-                          </div>
-                        </div>
-                      </div>
-                    )})}
+                      )
+                    })}
+
+
                   </div>
-                  
+
                   {chatbots.length > 3 && (
                     <div className="mt-4 text-center">
                       <Button variant="outline" asChild className="w-full sm:w-auto">
@@ -750,8 +813,8 @@ export default function DashboardHome() {
                       </CardDescription>
                     </div>
                     <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => setShowAllActivities(!showAllActivities)}
                         className="w-full sm:w-auto text-xs"
@@ -781,13 +844,12 @@ export default function DashboardHome() {
                   <div className="space-y-3 sm:space-y-4">
                     {(showAllActivities ? recentActivities : recentActivities.slice(0, 3)).map((activity, index) => (
                       <div key={index} className="flex items-start space-x-3 sm:space-x-4 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors group">
-                        <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          activity.status === 'success' ? (
-                            activity.color === 'text-[#94B9F9]' ? 'bg-[#EBF6FC]' :
+                        <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.status === 'success' ? (
+                          activity.color === 'text-[#94B9F9]' ? 'bg-[#EBF6FC]' :
                             activity.color === 'text-[#F4CAF7]' ? 'bg-[#F4CAF7]/20' :
-                            'bg-[#FB8A8F]/20'
-                          ) : 'bg-red-50'
-                        }`}>
+                              'bg-[#FB8A8F]/20'
+                        ) : 'bg-red-50'
+                          }`}>
                           <activity.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${activity.color}`} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -885,17 +947,16 @@ export default function DashboardHome() {
             <CardContent className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Current Plan</span>
-                <Badge className={`${
-                  profile?.subscription_plan === 'free' ? 'bg-gray-100 text-gray-700' :
+                <Badge className={`${profile?.subscription_plan === 'free' ? 'bg-gray-100 text-gray-700' :
                   profile?.subscription_plan === 'starter' ? 'bg-[#EBF6FC] text-[#94B9F9]' :
-                  profile?.subscription_plan === 'pro' ? 'bg-[#F4CAF7]/20 text-[#F4CAF7]' :
-                  'bg-[#FB8A8F]/20 text-[#FB8A8F]'
-                } border-0 capitalize text-xs`}>
+                    profile?.subscription_plan === 'pro' ? 'bg-[#F4CAF7]/20 text-[#F4CAF7]' :
+                      'bg-[#FB8A8F]/20 text-[#FB8A8F]'
+                  } border-0 capitalize text-xs`}>
                   {profile?.subscription_plan === 'pro' && <Crown className="w-3 h-3 mr-1" />}
                   {profile?.subscription_plan || 'Free'}
                 </Badge>
               </div>
-              
+
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-gray-600">Usage this month</span>
@@ -939,9 +1000,8 @@ export default function DashboardHome() {
             </CardHeader>
             <CardContent className="space-y-2 sm:space-y-3">
               {notifications.slice(0, showAllNotifications ? notifications.length : 3).map((notification) => (
-                <div key={notification.id} className={`p-2 sm:p-3 rounded-lg border transition-colors hover:bg-gray-50 ${
-                  notification.unread ? 'border-[#94B9F9]/20 bg-[#EBF6FC]/30' : 'border-gray-100'
-                }`}>
+                <div key={notification.id} className={`p-2 sm:p-3 rounded-lg border transition-colors hover:bg-gray-50 ${notification.unread ? 'border-[#94B9F9]/20 bg-[#EBF6FC]/30' : 'border-gray-100'
+                  }`}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
@@ -960,9 +1020,9 @@ export default function DashboardHome() {
               ))}
               <div className="flex flex-col space-y-2">
                 {notifications.length > 3 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="w-full text-xs"
                     onClick={() => setShowAllNotifications(!showAllNotifications)}
                   >
@@ -996,7 +1056,7 @@ export default function DashboardHome() {
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
               </Link>
-              
+
               <Link href="/dashboard/analytics" className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors group">
                 <div className="flex items-center">
                   <BarChart3 className="w-4 h-4 mr-3 text-[#FB8A8F]" />
@@ -1004,7 +1064,7 @@ export default function DashboardHome() {
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all" />
               </Link>
-              
+
               <Link href="/help" className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors group">
                 <div className="flex items-center">
                   <FileText className="w-4 h-4 mr-3 text-gray-600" />
