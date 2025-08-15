@@ -64,3 +64,124 @@ export const CHATBOT_CHANNELS = {
   MESSENGER: 'messenger',
   API: 'api'
 }
+
+
+// src/lib/constants.js
+
+// export const PLAN_LIMITS = {
+//   free: {
+//     chatbots: 2,
+//     fileUploads: 10,
+//     messagesPerMonth: 100,
+//     embeddings: 1000,
+//     apiCallsPerMinute: 10
+//   },
+//   starter: {
+//     chatbots: 5,
+//     fileUploads: 50,
+//     messagesPerMonth: 1000,
+//     embeddings: 10000,
+//     apiCallsPerMinute: 30
+//   },
+//   pro: {
+//     chatbots: 20,
+//     fileUploads: 200,
+//     messagesPerMonth: 10000,
+//     embeddings: 100000,
+//     apiCallsPerMinute: 100
+//   },
+//   enterprise: {
+//     chatbots: -1, // unlimited
+//     fileUploads: -1,
+//     messagesPerMonth: -1,
+//     embeddings: -1,
+//     apiCallsPerMinute: -1
+//   }
+// }
+
+// export const AI_MODELS = {
+//   'gpt-3.5-turbo': {
+//     name: 'GPT-3.5 Turbo',
+//     provider: 'openai',
+//     contextLength: 4096,
+//     costPer1K: 0.001
+//   },
+//   'gpt-4': {
+//     name: 'GPT-4',
+//     provider: 'openai',
+//     contextLength: 8192,
+//     costPer1K: 0.03
+//   },
+//   'gpt-4-turbo': {
+//     name: 'GPT-4 Turbo',
+//     provider: 'openai',
+//     contextLength: 128000,
+//     costPer1K: 0.01
+//   },
+//   'gemini-pro': {
+//     name: 'Gemini Pro',
+//     provider: 'google',
+//     contextLength: 32768,
+//     costPer1K: 0.0005
+//   }
+// }
+
+export const NAVIGATION_ITEMS = [
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
+    icon: 'Home',
+    description: 'Overview & analytics'
+  },
+  {
+    name: 'Chatbots',
+    href: '/dashboard/chatbots',
+    icon: 'Bot',
+    description: 'Manage AI assistants'
+  },
+  {
+    name: 'Training Data',
+    href: '/dashboard/training',
+    icon: 'BookOpen',
+    description: 'Manage knowledge base'
+  },
+  {
+    name: 'Analytics',
+    href: '/dashboard/analytics',
+    icon: 'BarChart3',
+    description: 'Usage insights'
+  },
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
+    icon: 'Settings',
+    description: 'Account & preferences'
+  }
+]
+
+export const PLAN_CONFIG = {
+  free: {
+    name: 'Free',
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    icon: null
+  },
+  starter: {
+    name: 'Starter',
+    color: 'text-[#94B9F9]',
+    bgColor: 'bg-[#EBF6FC]',
+    icon: 'Sparkles'
+  },
+  pro: {
+    name: 'Pro',
+    color: 'text-[#F4CAF7]',
+    bgColor: 'bg-[#F4CAF7]/20',
+    icon: 'Crown'
+  },
+  enterprise: {
+    name: 'Enterprise',
+    color: 'text-[#FB8A8F]',
+    bgColor: 'bg-[#FB8A8F]/20',
+    icon: 'Crown'
+  }
+}

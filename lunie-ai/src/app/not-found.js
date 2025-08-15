@@ -1,3 +1,4 @@
+// lunie-ai/src/app/not-found.js
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Home, Search } from 'lucide-react'
