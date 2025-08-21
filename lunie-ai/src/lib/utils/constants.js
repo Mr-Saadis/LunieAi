@@ -34,12 +34,64 @@ export const PLAN_LIMITS = {
 }
 
 export const AI_MODELS = {
-  'gpt-3.5-turbo': { name: 'GPT-3.5 Turbo', provider: 'openai', fast: true },
-  'gpt-4': { name: 'GPT-4', provider: 'openai', fast: false },
-  'gpt-4o': { name: 'GPT-4o', provider: 'openai', fast: true },
-  'gpt-4o-mini': { name: 'GPT-4o Mini', provider: 'openai', fast: true },
-  'gpt-4-turbo': { name: 'GPT-4 Turbo', provider: 'openai', fast: true },
-  'gemini-pro': { name: 'Gemini Pro', provider: 'google', fast: true }
+  // Gemini Models (FREE TIER FIRST!)
+  'gemini-1.5-flash-8b': { 
+    name: 'Gemini 1.5 Flash 8B', 
+    provider: 'google', 
+    fast: true,
+    tier: 'free',
+    costPer1K: 0,
+    description: 'Fast and free model for testing',
+    recommended: true,
+    contextLength: 1000000
+  },
+  'gemini-1.5-flash': { 
+    name: 'Gemini 1.5 Flash', 
+    provider: 'google', 
+    fast: true,
+    tier: 'paid',
+    costPer1K: 0.0002,
+    description: 'Balanced speed and performance',
+    contextLength: 1000000
+  },
+  'gemini-1.5-pro': { 
+    name: 'Gemini 1.5 Pro', 
+    provider: 'google', 
+    fast: false,
+    tier: 'paid',
+    costPer1K: 0.0035,
+    description: 'Most capable model for complex tasks',
+    contextLength: 2000000
+  },
+  
+  // OpenAI Models (for future)
+  'gpt-3.5-turbo': { 
+    name: 'GPT-3.5 Turbo', 
+    provider: 'openai', 
+    fast: true,
+    tier: 'paid',
+    costPer1K: 0.001,
+    description: 'Fast and cost-effective',
+    contextLength: 4096
+  },
+  'gpt-4o-mini': { 
+    name: 'GPT-4o Mini', 
+    provider: 'openai', 
+    fast: true,
+    tier: 'paid',
+    costPer1K: 0.0002,
+    description: 'Most affordable GPT-4 level model',
+    contextLength: 128000
+  },
+  'gpt-4o': { 
+    name: 'GPT-4o', 
+    provider: 'openai', 
+    fast: true,
+    tier: 'paid',
+    costPer1K: 0.005,
+    description: 'Latest and most capable GPT model',
+    contextLength: 128000
+  }
 }
 
 export const TRAINING_DATA_TYPES = {
@@ -96,33 +148,6 @@ export const CHATBOT_CHANNELS = {
 //     messagesPerMonth: -1,
 //     embeddings: -1,
 //     apiCallsPerMinute: -1
-//   }
-// }
-
-// export const AI_MODELS = {
-//   'gpt-3.5-turbo': {
-//     name: 'GPT-3.5 Turbo',
-//     provider: 'openai',
-//     contextLength: 4096,
-//     costPer1K: 0.001
-//   },
-//   'gpt-4': {
-//     name: 'GPT-4',
-//     provider: 'openai',
-//     contextLength: 8192,
-//     costPer1K: 0.03
-//   },
-//   'gpt-4-turbo': {
-//     name: 'GPT-4 Turbo',
-//     provider: 'openai',
-//     contextLength: 128000,
-//     costPer1K: 0.01
-//   },
-//   'gemini-pro': {
-//     name: 'Gemini Pro',
-//     provider: 'google',
-//     contextLength: 32768,
-//     costPer1K: 0.0005
 //   }
 // }
 
