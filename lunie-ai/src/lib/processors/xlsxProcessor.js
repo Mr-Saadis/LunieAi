@@ -1,5 +1,7 @@
 // lib/processors/xlsxProcessor.js
 import * as XLSX from 'xlsx';
+import { encode, decode } from "gpt-tokenizer";
+
 
 export async function processXlsx(buffer) {
   try {
@@ -66,7 +68,7 @@ export async function processXlsx(buffer) {
     console.log('XLSX Processor: Word count calculated:', wordCount);
 
     // Create chunks
-    const chunks = chunkText(cleanedText, 800);
+    const chunks = chunkText(cleanedText, process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 800);
     console.log('XLSX Processor: Text chunked into:', chunks.length, 'pieces');
 
     return {
@@ -158,36 +160,102 @@ function cleanText(text) {
     .trim();
 }
 
-function chunkText(text, maxLength = 800) {
-  // For spreadsheet data, split by sheets first, then by size
+// function chunkText(text, maxLength = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 800) {
+//   // For spreadsheet data, split by sheets first, then by size
+//   const sections = text.split(/Sheet: [^\n]+\n=+\n/);
+//   const chunks = [];
+  
+//   for (const section of sections) {
+//     if (section.trim().length === 0) continue;
+    
+//     if (section.length <= maxLength) {
+//       chunks.push(section.trim());
+//     } else {
+//       // Split large sections by sentences
+//       const sentences = section.split(/[.\n]+/).filter(s => s.trim().length > 0);
+//       let currentChunk = '';
+      
+//       for (const sentence of sentences) {
+//         const trimmedSentence = sentence.trim();
+//         if ((currentChunk + trimmedSentence).length > maxLength && currentChunk.length > 0) {
+//           chunks.push(currentChunk.trim());
+//           currentChunk = trimmedSentence + '. ';
+//         } else {
+//           currentChunk += trimmedSentence + '. ';
+//         }
+//       }
+      
+//       if (currentChunk.trim().length > 0) {
+//         chunks.push(currentChunk.trim());
+//       }
+//     }
+//   }
+  
+//   return chunks.filter(chunk => chunk.length > 20); // Filter out very short chunks
+// }
+
+
+/**
+ * Token-based chunking for spreadsheet-like data
+ * - Splits text by sheets first
+ * - Then splits large sheets into token-based chunks
+ * - Supports overlap between chunks
+ */
+export function chunkText(
+  text,
+  maxTokens = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1000,
+  overlap = process.env.CHUNK_OVERLAP ? parseInt(process.env.CHUNK_OVERLAP) : 100
+) {
+  if (!text) return [];
+
+  // Step 1: split by sheets (e.g., "Sheet: Sales\n====")
   const sections = text.split(/Sheet: [^\n]+\n=+\n/);
   const chunks = [];
-  
+  let chunkIndex = 1;
+
   for (const section of sections) {
     if (section.trim().length === 0) continue;
-    
-    if (section.length <= maxLength) {
-      chunks.push(section.trim());
-    } else {
-      // Split large sections by sentences
-      const sentences = section.split(/[.\n]+/).filter(s => s.trim().length > 0);
-      let currentChunk = '';
-      
-      for (const sentence of sentences) {
-        const trimmedSentence = sentence.trim();
-        if ((currentChunk + trimmedSentence).length > maxLength && currentChunk.length > 0) {
-          chunks.push(currentChunk.trim());
-          currentChunk = trimmedSentence + '. ';
-        } else {
-          currentChunk += trimmedSentence + '. ';
-        }
+
+    // Encode into tokens
+    const tokens = encode(section);
+
+    // If small section, keep it as a single chunk
+    if (tokens.length <= maxTokens) {
+      const chunkText = decode(tokens).trim();
+      if (chunkText.length > 20) {
+        chunks.push(chunkText);
+
+        console.log(`\n--- Chunk ${chunkIndex} ---`);
+        console.log(`Tokens: ${tokens.length}`);
+        console.log(`Words: ${chunkText.split(/\s+/).length}`);
+        console.log(`Characters: ${chunkText.length}`);
+        console.log(chunkText.substring(0, 100) + (chunkText.length > 100 ? "..." : ""));
+        chunkIndex++;
       }
-      
-      if (currentChunk.trim().length > 0) {
-        chunks.push(currentChunk.trim());
+    } else {
+      // Step 2: break large section into overlapping token chunks
+      let start = 0;
+      while (start < tokens.length) {
+        const end = Math.min(start + maxTokens, tokens.length);
+        const chunkTokens = tokens.slice(start, end);
+        const chunkText = decode(chunkTokens).trim();
+
+        if (chunkText.length > 20) {
+          chunks.push(chunkText);
+
+          // Log info for debugging
+          console.log(`\n--- Chunk ${chunkIndex} ---`);
+          console.log(`Tokens: ${chunkTokens.length}`);
+          console.log(`Words: ${chunkText.split(/\s+/).length}`);
+          console.log(`Characters: ${chunkText.length}`);
+          console.log(chunkText.substring(0, 100) + (chunkText.length > 100 ? "..." : ""));
+          chunkIndex++;
+        }
+
+        start += maxTokens - overlap; // move with overlap
       }
     }
   }
-  
-  return chunks.filter(chunk => chunk.length > 20); // Filter out very short chunks
+
+  return chunks;
 }

@@ -138,6 +138,8 @@
 
 // lib/processors/pdfProcessor.js
 import pdf from 'pdf-parse';
+import { encode, decode } from "gpt-tokenizer";
+
 export async function processPDF(buffer) {
   try {
     console.log('PDF Processor: Starting processing...');
@@ -162,7 +164,7 @@ export async function processPDF(buffer) {
     console.log('PDF Processor: Word count calculated:', wordCount);
     
     // Create chunks
-    const chunks = chunkText(cleanedText, 800);
+    const chunks = chunkText(cleanedText, process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 800);
     console.log('PDF Processor: Text chunked into:', chunks.length, 'pieces');
     
     return {
@@ -192,24 +194,79 @@ function cleanText(text) {
     .trim();
 }
 
-function chunkText(text, maxLength = 800) {
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+// function chunkText(text, maxLength = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 800) {
+//   if (!text) return [];
+  
+//   // Simple sentence-based chunking
+//   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+//   const chunks = [];
+//   let currentChunk = '';
+
+//   for (const sentence of sentences) {
+//     const trimmedSentence = sentence.trim();
+//     if ((currentChunk + trimmedSentence).length > maxLength && currentChunk.length > 0) {
+//       chunks.push(currentChunk.trim());
+//       currentChunk = trimmedSentence + '. ';
+//     } else {
+//       currentChunk += trimmedSentence + '. ';
+//     }
+//   }
+
+//   if (currentChunk.trim().length > 0) {
+//     chunks.push(currentChunk.trim());
+//   }
+
+//   return chunks.filter(chunk => chunk.length > 20); // Filter out very short chunks
+// }
+
+
+
+
+/**
+ * Token-based chunking using gpt-tokenizer
+ * - Max tokens per chunk (default 1000)
+ * - Overlap between chunks (default 100)
+ * - Logs: tokens, words, characters
+ */
+export function chunkText(
+  text,
+  maxTokens = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1000,
+  overlap = 100
+) {
+  if (!text) return [];
+
+  // Encode full text into tokens
+  const tokens = encode(text);
   const chunks = [];
-  let currentChunk = '';
+  let start = 0;
+  let chunkIndex = 1;
 
-  for (const sentence of sentences) {
-    const trimmedSentence = sentence.trim();
-    if ((currentChunk + trimmedSentence).length > maxLength && currentChunk.length > 0) {
-      chunks.push(currentChunk.trim());
-      currentChunk = trimmedSentence + '. ';
-    } else {
-      currentChunk += trimmedSentence + '. ';
+  while (start < tokens.length) {
+    const end = Math.min(start + maxTokens, tokens.length);
+    const chunkTokens = tokens.slice(start, end);
+    const chunkText = decode(chunkTokens).trim();
+
+    if (chunkText.length > 20) {
+      const charCount = chunkText.length;
+      const wordCount = chunkText.split(/\s+/).length;
+      const tokenCount = chunkTokens.length;
+
+      // Push into final chunks
+      chunks.push(chunkText);
+
+      // Log info
+      console.log(`\n--- Chunk ${chunkIndex} ---`);
+      console.log(`Tokens: ${tokenCount}`);
+      console.log(`Words: ${wordCount}`);
+      console.log(`Characters: ${charCount}`);
+      console.log(chunkText.substring(0, 100) + (chunkText.length > 100 ? "..." : "")); // preview first 100 chars
+
+      chunkIndex++;
     }
+
+    // Move forward with overlap
+    start += maxTokens - overlap;
   }
 
-  if (currentChunk.trim().length > 0) {
-    chunks.push(currentChunk.trim());
-  }
-
-  return chunks.filter(chunk => chunk.length > 20); // Filter out very short chunks
+  return chunks;
 }

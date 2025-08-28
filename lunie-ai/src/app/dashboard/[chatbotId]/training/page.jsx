@@ -985,20 +985,28 @@ const AddTextContent = ({ chatbotId, onTextAdded }) => {
     setLoading(true)
 
     try {
-      const trainingData = {
-        type: 'text',
-        title: formData.title.trim(),
-        content: formData.content.trim(),
-        metadata: {
-          wordCount: formData.content.trim().split(/\s+/).length,
-          addedManually: true
-        }
+      // Use the new vector-enabled API route
+      const response = await fetch('/api/training-data/text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatbotId,
+          title: formData.title.trim(),
+          content: formData.content.trim()
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to add text content')
       }
 
-      const user = await getCurrentUser()
-      await createTrainingData(chatbotId, user.id, trainingData)
-
-      toast.success('Text content added successfully!')
+      // Show success with vector info
+      const vectorInfo = result.data?.vectors ? ` (${result.data.vectors} vectors created)` : ''
+      toast.success(`Text content added successfully!${vectorInfo}`)
       onTextAdded?.()
       
       // Reset form
@@ -1059,7 +1067,7 @@ const AddTextContent = ({ chatbotId, onTextAdded }) => {
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Saving...</span>
+              <span>Processing & Creating Vectors...</span>
             </>
           ) : (
             <>
@@ -1072,6 +1080,8 @@ const AddTextContent = ({ chatbotId, onTextAdded }) => {
     </form>
   )
 }
+
+
 
 // Q&A Pair Form Component
 const QAPairForm = ({ onSubmit, onCancel, initialData = null }) => {

@@ -190,13 +190,14 @@
 
 
 // lib/processors/fastApiOcrProcessor.js
+import { encode, decode } from "gpt-tokenizer";
 export async function processFastApiOCR(buffer, options = {}) {
   const {
     language = 'auto',
     enhance = true,
     enhancement_level = 'medium',
     chunk_text = true,
-    chunk_size = 800
+    chunk_size = 1000
   } = options;
 
   try {
@@ -237,7 +238,7 @@ export async function processFastApiOCR(buffer, options = {}) {
     // Create chunks if requested
     let chunks = [];
     if (chunk_text && text.trim()) {
-      chunks = createTextChunks(text, chunk_size);
+      chunks = chunkText(text, chunk_size);
     }
 
     // Prepare metadata
@@ -344,5 +345,59 @@ function createTextChunks(text, maxLength = 800) {
     }
   }
   
+  return chunks;
+}
+
+
+// utils/text-processing.js
+
+
+
+/**
+ * Token-based chunking using gpt-tokenizer
+ * - Max tokens per chunk (default 1000)
+ * - Overlap between chunks (default 100)
+ * - Logs: tokens, words, characters
+ */
+export function chunkText(
+  text,
+  maxTokens = process.env.CHUNK_SIZE ? parseInt(process.env.CHUNK_SIZE) : 1000,
+  overlap = 100
+) {
+  if (!text) return [];
+
+  // Encode full text into tokens
+  const tokens = encode(text);
+  const chunks = [];
+  let start = 0;
+  let chunkIndex = 1;
+
+  while (start < tokens.length) {
+    const end = Math.min(start + maxTokens, tokens.length);
+    const chunkTokens = tokens.slice(start, end);
+    const chunkText = decode(chunkTokens).trim();
+
+    if (chunkText.length > 20) {
+      const charCount = chunkText.length;
+      const wordCount = chunkText.split(/\s+/).length;
+      const tokenCount = chunkTokens.length;
+
+      // Push into final chunks
+      chunks.push(chunkText);
+
+      // Log info
+      console.log(`\n--- Chunk ${chunkIndex} ---`);
+      console.log(`Tokens: ${tokenCount}`);
+      console.log(`Words: ${wordCount}`);
+      console.log(`Characters: ${charCount}`);
+      console.log(chunkText.substring(0, 100) + (chunkText.length > 100 ? "..." : "")); // preview first 100 chars
+
+      chunkIndex++;
+    }
+
+    // Move forward with overlap
+    start += maxTokens - overlap;
+  }
+
   return chunks;
 }

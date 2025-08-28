@@ -1,85 +1,287 @@
-import { NextResponse } from 'next/server';
-import { AIProviderFactory } from '@/lib/ai/factory';
-import { getModelConfig } from '@/lib/ai/config/models';
-import { AI_MODELS } from '@/lib/ai/config/models';
+// src/app/api/ai/test/route.js
+/**
+ * AI Model Testing API
+ * Test and compare different models
+ */
 
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
+import { EnhancedGeminiProvider } from '@/lib/ai/providers/gemini-enhanced';
+import { getPromptEngineer } from '@/lib/ai/prompt-engineer';
+import { getUsageTracker } from '@/lib/ai/usage-tracker';
+
+/**
+ * POST /api/ai/test
+ * Test AI models with sample prompts
+ */
 export async function POST(request) {
   try {
-    const { message, model } = await request.json();
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Validation
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    // Authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const selectedModel = model || process.env.AI_MODEL_DEFAULT || 'gemini-1.5-flash-8b';
-    const modelConfig = getModelConfig(selectedModel);
-    
-    if (!modelConfig) {
-      return NextResponse.json({ error: 'Invalid model selected' }, { status: 400 });
+    const body = await request.json();
+    const {
+      prompt,
+      models = ['gemini-1.5-flash'],
+      temperature = 0.7,
+      maxTokens = 1000,
+      compareMode = false,
+      testType = 'single' // 'single', 'batch', 'benchmark'
+    } = body;
+
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    // Create AI provider
-    console.log('Creating AI provider for model:', selectedModel);
-    const aiProvider = await AIProviderFactory.createProvider(selectedModel);
-    
-    // Test messages
-    const messages = [
-      { role: 'user', content: message }
-    ];
+    const promptEngineer = getPromptEngineer();
+    const usageTracker = getUsageTracker();
+    const results = [];
 
-    console.log('Sending message to AI provider...');
-    const startTime = Date.now();
-    
-    // Generate response
-    const response = await aiProvider.generateResponse(messages, {
-      temperature: 0.7,
-      maxTokens: 500
+    // Test each model
+    for (const modelId of models) {
+      try {
+        const provider = new EnhancedGeminiProvider(modelId);
+        const startTime = Date.now();
+
+        // Build optimized prompt
+        const optimizedPrompt = promptEngineer.optimizeForModel(prompt, modelId);
+
+        // Generate response
+        const response = await provider.generateResponse(
+          [
+            { role: 'user', content: optimizedPrompt }
+          ],
+          {
+            temperature,
+            maxTokens,
+            userId: user.id
+          }
+        );
+
+        const endTime = Date.now();
+
+        results.push({
+          model: modelId,
+          success: true,
+          response: response.content,
+          usage: response.usage,
+          duration: endTime - startTime,
+          timestamp: new Date().toISOString()
+        });
+
+      } catch (error) {
+        results.push({
+          model: modelId,
+          success: false,
+          error: error.message || 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Calculate comparison metrics if in compare mode
+    let comparison = null;
+    if (compareMode && results.length > 1) {
+      comparison = calculateComparison(results);
+    }
+
+    // Save test results to database
+    await saveTestResults(supabase, user.id, {
+      prompt,
+      results,
+      comparison,
+      testType,
+      parameters: { temperature, maxTokens }
     });
 
-    const totalTime = Date.now() - startTime;
-
     return NextResponse.json({
-      success: true,
-      response: response.content,
-      metadata: {
-        model: selectedModel,
-        provider: response.provider,
-        usage: response.usage,
-        duration: totalTime,
-        modelConfig
-      }
+      results,
+      comparison,
+      testId: crypto.randomUUID(),
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('AI Test API Error:', error);
-    
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      type: error.name || 'AIError'
-    }, { status: 500 });
+    console.error('Model test error:', error);
+    return NextResponse.json(
+      { error: 'Test failed' },
+      { status: 500 }
+    );
   }
 }
 
-// GET method for quick health check
-export async function GET() {
+/**
+ * GET /api/ai/test/benchmark
+ * Run benchmark tests
+ */
+export async function GET(request) {
   try {
-    const availableModels = Object.keys(AI_MODELS).map(key => ({
-      model: key,
-      ...AI_MODELS[key]
-    }));
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Benchmark test suite
+    const benchmarks = [
+      {
+        name: 'Simple Question',
+        prompt: 'What is the capital of France?',
+        expectedKeywords: ['Paris']
+      },
+      {
+        name: 'Math Problem',
+        prompt: 'What is 25 * 4 + 10?',
+        expectedKeywords: ['110']
+      },
+      {
+        name: 'Creative Writing',
+        prompt: 'Write a haiku about technology',
+        expectedKeywords: [] // No specific keywords for creative
+      },
+      {
+        name: 'Code Generation',
+        prompt: 'Write a JavaScript function to reverse a string',
+        expectedKeywords: ['function', 'return', 'split', 'reverse', 'join']
+      },
+      {
+        name: 'Summarization',
+        prompt: 'Summarize in one sentence: The Internet has revolutionized communication, commerce, and access to information worldwide.',
+        expectedKeywords: ['Internet', 'revolutionized']
+      }
+    ];
+
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    const results = {};
+
+    for (const model of models) {
+      results[model] = {
+        tests: [],
+        avgResponseTime: 0,
+        successRate: 0,
+        avgTokens: 0
+      };
+
+      const provider = new EnhancedGeminiProvider(model);
+
+      for (const benchmark of benchmarks) {
+        const startTime = Date.now();
+        
+        try {
+          const response = await provider.generateResponse(
+            [{ role: 'user', content: benchmark.prompt }],
+            { temperature: 0.3, maxTokens: 500, userId: user.id }
+          );
+
+          const duration = Date.now() - startTime;
+          const accuracy = calculateAccuracy(response.content, benchmark.expectedKeywords);
+
+          results[model].tests.push({
+            name: benchmark.name,
+            success: true,
+            duration,
+            accuracy,
+            tokens: response.usage.totalTokens
+          });
+
+        } catch (error) {
+          results[model].tests.push({
+            name: benchmark.name,
+            success: false,
+            error: error.message
+          });
+        }
+      }
+
+      // Calculate aggregates
+      const successfulTests = results[model].tests.filter(t => t.success);
+      results[model].successRate = (successfulTests.length / benchmarks.length) * 100;
+      
+      if (successfulTests.length > 0) {
+        results[model].avgResponseTime = 
+          successfulTests.reduce((sum, t) => sum + t.duration, 0) / successfulTests.length;
+        results[model].avgTokens = 
+          successfulTests.reduce((sum, t) => sum + (t.tokens || 0), 0) / successfulTests.length;
+      }
+    }
 
     return NextResponse.json({
-      status: 'AI service healthy',
-      defaultModel: process.env.AI_MODEL_DEFAULT,
-      availableModels,
+      benchmarks: results,
       timestamp: new Date().toISOString()
     });
+
   } catch (error) {
-    return NextResponse.json({
-      status: 'AI service error',
-      error: error.message
-    }, { status: 500 });
+    console.error('Benchmark error:', error);
+    return NextResponse.json(
+      { error: 'Benchmark failed' },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper functions
+function calculateComparison(results) {
+  const successful = results.filter(r => r.success);
+  
+  if (successful.length === 0) {
+    return { error: 'No successful responses to compare' };
+  }
+
+  return {
+    fastest: successful.reduce((prev, curr) => 
+      prev.duration < curr.duration ? prev : curr
+    ).model,
+    
+    avgResponseTime: successful.reduce((sum, r) => sum + r.duration, 0) / successful.length,
+    
+    tokenEfficiency: successful.map(r => ({
+      model: r.model,
+      tokensPerMs: r.usage.totalTokens / r.duration
+    })).sort((a, b) => b.tokensPerMs - a.tokensPerMs),
+    
+    successRate: (successful.length / results.length) * 100
+  };
+}
+
+function calculateAccuracy(response, expectedKeywords) {
+  if (expectedKeywords.length === 0) return 100; // No specific expectations
+  
+  const foundKeywords = expectedKeywords.filter(keyword => 
+    response.toLowerCase().includes(keyword.toLowerCase())
+  );
+  
+  return (foundKeywords.length / expectedKeywords.length) * 100;
+}
+
+async function saveTestResults(supabase, userId, testData) {
+  try {
+    const { error } = await supabase
+      .from('ai_test_results')
+      .insert({
+        user_id: userId,
+        test_type: testData.testType,
+        prompt: testData.prompt,
+        results: testData.results,
+        comparison: testData.comparison,
+        parameters: testData.parameters,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('Failed to save test results:', error);
+    }
+  } catch (error) {
+    console.error('Save test error:', error);
   }
 }
