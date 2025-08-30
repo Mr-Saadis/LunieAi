@@ -13,8 +13,8 @@ class GeminiEmbeddings {
     }
     
     this.client = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    this.model = 'text-embedding-004';
-    this.dimensions = 768;
+    this.model = 'text-embedding-001';
+    this.dimensions = 1536; // Dimensions for text-embedding-001
     this.batchSize = 100;
   }
 
