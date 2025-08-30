@@ -115,7 +115,7 @@ const chatbotNavigation = [
   },
   {
     name: 'Playground',
-    href: '/playground',
+    href: '/chat',
     icon: Play,
     description: 'Test your chatbot'
   }
