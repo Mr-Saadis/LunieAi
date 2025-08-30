@@ -13,26 +13,8 @@ class RAGService {
     this.initialized = false
     this.performanceCache = new Map()
     this.metricsCache = new Map()
-    this.maxCacheEntries = 100;
-    this.cacheExpiryMs = 5 * 60 * 1000; // 5 minutes
     this.cacheExpiry = 5 * 60 * 1000 // 5 minutes
-
-
-    this.analytics = {
-      queries: new Map(), // query -> count
-      performance: new Map(), // date -> metrics
-      costs: new Map(), // date -> token costs
-      errors: new Map() // error type -> count
-    }
-
   }
-
-  _makeCacheKey(query) {
-    return query.toLowerCase()
-      .replace(/[^\w\s]/g, '')   // remove punctuation
-      .replace(/\s+/g, '_');
-  }
-
 
   async initialize() {
     if (this.initialized) return
@@ -59,39 +41,38 @@ class RAGService {
   }
 
 
-
-  getCachedResult(query) {
-    const key = this._makeCacheKey(query);
-    console.log('🔍 Checking cache for key:', key);
-    const entry = this.performanceCache.get(key);
-    if (entry && Date.now() - entry.timestamp < this.cacheExpiryMs) {
-      console.log('✅ Cache HIT for query:', query.substring(0, 50));
-      // Reinsert key to mark as recently used (LRU behavior)
-      this.performanceCache.delete(key);
-      this.performanceCache.set(key, entry);
-      return entry.result;
-    }
-    console.log('❌ Cache MISS for query:', query.substring(0, 50));
-    return null;
+// NEW: Simple caching
+getCachedResult(query) {
+  const key = query.toLowerCase().replace(/\s+/g, '_')
+  const cached = this.performanceCache.get(key)
+  
+  if (cached && Date.now() - cached.timestamp < this.cacheExpiry) {
+    console.log('Cache hit for query:', query.substring(0, 50))
+    return cached.result
   }
+  
+  return null
+}
 
-
-
-
-  cacheResult(query, result) {
-    const key = this._makeCacheKey(query);
-    this.performanceCache.set(key, {
-      result,  // full RAG object
-      timestamp: Date.now(),
-    });
-    console.log(`💾 Caching result for key: ${key} at ${new Date().toISOString()}`);
-    // Evict oldest entry if cache is full (simple LRU using Map ordering)
-    if (this.performanceCache.size > this.maxCacheEntries) {
-      const oldestKey = this.performanceCache.keys().next().value;
-      console.log('🗑️ Evicting LRU cache key:', oldestKey);
-      this.performanceCache.delete(oldestKey);
-    }
+// NEW: Cache results
+cacheResult(query, result) {
+  const key = query.toLowerCase().replace(/\s+/g, '_')
+  this.performanceCache.set(key, {
+    result,
+    timestamp: Date.now()
+  })
+  
+  // Prevent memory leak - keep only last 100 entries
+  if (this.performanceCache.size > 100) {
+    const firstKey = this.performanceCache.keys().next().value
+    this.performanceCache.delete(firstKey)
   }
+}
+
+
+
+
+
 
 
 
@@ -107,21 +88,11 @@ class RAGService {
 
   async processQuery(query, chatbotId, options = {}) {
 
-    //   const cached = this.getCachedResult(query)
-    // if (cached) return cached
-    const cacheKey = this._makeCacheKey(query);
-
-    // 1. Check cache
-    const cached = this.performanceCache.get(cacheKey);
-    if (cached) {
-      console.log("✅ Cache HIT for key:", cacheKey);
-      return this.performanceCache.get(cacheKey).result; // return full object
-    }
-    console.log("❌ Cache MISS for query:", query);
+    const cached = this.getCachedResult(query)
+  if (cached) return cached
 
 
     const startTime = Date.now()
-    const overallStart = Date.now();
 
     try {
       await this.initialize()
@@ -130,11 +101,9 @@ class RAGService {
       console.log(`Query: "${query}"`)
 
       // Step 1: Clean query
-      const t0 = Date.now();
       // const cleanQuery = query.trim().toLowerCase()
       const queryAnalysis = this.preprocessQuery(query)
       const embeddingResult = await this.embeddings.generateEmbedding(queryAnalysis.enhanced)
-      console.log(`⏱ Embedding took ${Date.now() - t0} ms`);
 
 
       // Step 2: Generate embedding
@@ -142,51 +111,36 @@ class RAGService {
       console.log(`Generated embedding with ${embeddingResult.dimensions} dimensions`)
 
       // Step 3: Search vectors - SIMPLIFIED VERSION
-      const t1 = Date.now();
       const searchResults = await this.searchVectors(embeddingResult.embedding, chatbotId)
       console.log(`Found ${searchResults.length} relevant chunks`)
-      console.log(`⏱ Qdrant search took ${Date.now() - t1} ms`);
-
 
       // Step 4: Create context
-      const t2 = Date.now();
-
       // const context = this.createContext(searchResults)
       const context = await this.createEnhancedContext(searchResults)
       console.log(`Assembled context: ${context.content.length} chars`)
-      console.log(`⏱ Context building took ${Date.now() - t2} ms`);
 
       // Step 5: Generate AI response
-      const t3 = Date.now();
       const response = await this.generateResponse(queryAnalysis.enhanced, context, chatbotId)
-      console.log(`⏱ AI response generation took ${Date.now() - t3} ms`);
-
 
       const duration = Date.now() - startTime
-      const overAllDuration = Date.now() - overallStart;
 
-      // this.trackQuery(query, duration, response.sources?.length)
-      this.trackQuery(query, duration, true, searchResults.length, this.calculateConfidence(searchResults))
+      if (response.success) {
+    this.cacheResult(query, response)
+  }
 
-      const finalResult = {
+      return {
         success: true,
         response: response.content,
         sources: context.sources,
         metadata: {
           query: queryAnalysis.enhanced,
-          duration: overAllDuration,
+          duration,
           chunks_used: searchResults.length,
           confidence: this.calculateConfidence(searchResults),
           model: 'gemini-1.5-flash',
           tokens_used: response.usage?.totalTokens || 0
         }
-      };
-
-      // store the FULL final result
-      this.cacheResult(query, finalResult);
-
-      return finalResult;
-
+      }
 
     } catch (error) {
       console.error('RAG Pipeline Error:', error)
@@ -197,125 +151,6 @@ class RAGService {
       }
     }
   }
-
-
-  // trackQuery(query, duration, success, sourceCount) {
-  //   const today = new Date().toDateString()
-
-  //   // Query frequency
-  //   const queryKey = query.toLowerCase().substring(0, 50)
-  //   this.analytics.queries.set(queryKey, (this.analytics.queries.get(queryKey) || 0) + 1)
-
-  //   // Performance metrics
-  //   if (!this.analytics.performance.has(today)) {
-  //     this.analytics.performance.set(today, {
-  //       totalQueries: 0,
-  //       successfulQueries: 0,
-  //       avgDuration: 0,
-  //       avgSources: 0
-  //     })
-  //   }
-
-  //   const dayMetrics = this.analytics.performance.get(today)
-  //   dayMetrics.totalQueries++
-  //   if (success) {
-  //     dayMetrics.successfulQueries++
-  //     dayMetrics.avgSources = (dayMetrics.avgSources + sourceCount) / dayMetrics.successfulQueries
-  //   }
-  //   dayMetrics.avgDuration = (dayMetrics.avgDuration + duration) / dayMetrics.totalQueries
-  // }
-  // Add to your RAGService class
-  trackQuery(query, duration, success, sourceCount, confidence = 0) {
-    const today = new Date().toDateString()
-
-    // Query frequency tracking
-    const queryKey = query.toLowerCase().substring(0, 50)
-    if (!this.analytics) {
-      this.analytics = {
-        queries: new Map(),
-        performance: new Map(),
-        costs: new Map()
-      }
-    }
-
-    this.analytics.queries.set(queryKey, (this.analytics.queries.get(queryKey) || 0) + 1)
-
-    // Daily performance metrics
-    if (!this.analytics.performance.has(today)) {
-      this.analytics.performance.set(today, {
-        totalQueries: 0,
-        successfulQueries: 0,
-        totalDuration: 0,
-        avgDuration: 0,
-        avgConfidence: 0,
-        avgSources: 0
-      })
-    }
-
-    const dayMetrics = this.analytics.performance.get(today)
-    dayMetrics.totalQueries++
-    dayMetrics.totalDuration += duration
-    dayMetrics.avgDuration = dayMetrics.totalDuration / dayMetrics.totalQueries
-
-    if (success) {
-      dayMetrics.successfulQueries++
-      dayMetrics.avgConfidence = (dayMetrics.avgConfidence + confidence) / dayMetrics.successfulQueries
-      dayMetrics.avgSources = (dayMetrics.avgSources + sourceCount) / dayMetrics.successfulQueries
-    }
-  }
-
-  getAnalytics() {
-    if (!this.analytics) return { queries: [], performance: {}, cache: { size: 0 } }
-
-    return {
-      popularQueries: Array.from(this.analytics.queries.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([query, count]) => ({ query, count })),
-
-      performance: Object.fromEntries(this.analytics.performance),
-
-      cache: {
-        size: this.performanceCache.size,
-        maxSize: 100
-      }
-    }
-  }
-
-
-
-  assessResponseQuality(query, response, sources) {
-    const quality = {
-      completeness: 0,
-      sourceRelevance: 0,
-      answerLength: response.length,
-      hasDirectAnswer: false
-    }
-
-    // Check if response directly addresses query
-    const queryWords = query.toLowerCase().split(' ')
-    const responseWords = response.toLowerCase().split(' ')
-    const overlap = queryWords.filter(word => responseWords.includes(word))
-    quality.completeness = overlap.length / queryWords.length
-
-    // Check for direct answers
-    quality.hasDirectAnswer = /^(yes|no|the answer is|according to)/i.test(response)
-
-    // Source relevance
-    if (sources.length > 0) {
-      quality.sourceRelevance = sources.reduce((sum, s) => sum + s.score, 0) / sources.length
-    }
-
-    return quality
-  }
-
-
-
-
-
-
-
-
 
   // SIMPLIFIED VECTOR SEARCH
   async searchVectors(queryEmbedding, chatbotId) {
