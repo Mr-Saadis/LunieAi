@@ -95,6 +95,7 @@ cacheResult(query, result) {
     const startTime = Date.now()
 
     try {
+      
       await this.initialize()
 
       console.log(`Processing RAG query for chatbot: ${chatbotId}`)

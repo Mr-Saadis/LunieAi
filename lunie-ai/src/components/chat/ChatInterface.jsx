@@ -1,7 +1,7 @@
-// src/components/chat/ChatInterface.jsx
+// src/components/chat/ChatInterface.jsx - STICKY HEADER/FOOTER FIXED
 /**
- * 💬 Chat Interface Component
- * Real-time chat with RAG-powered responses
+ * 💬 Chat Interface Component - Fixed Header/Footer with Scrollable Messages
+ * Header aur footer fixed, sirf messages scroll hotey hain
  */
 
 'use client'
@@ -9,9 +9,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useMemoryChat } from '@/hooks/useMemoryChat'
+import { MemoryIndicator } from '@/components/chat/MemoryIndicator'
+
 import { 
   Send, 
   Bot, 
@@ -20,8 +23,12 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle,
-  ExternalLink,
-  Lightbulb
+  Brain,
+  Zap,
+  Target,
+  RefreshCw,
+  MessageSquare,
+  Sparkles
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -36,6 +43,14 @@ export default function ChatInterface({ chatbotId, chatbot = null }) {
   // Refs
   const scrollAreaRef = useRef(null)
   const inputRef = useRef(null)
+  const {
+    messages1,
+    conversationId1,
+    loading,
+    memoryInfo,
+    sendMessage1,
+    clearConversation
+  } = useMemoryChat(chatbotId)
   
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -130,7 +145,7 @@ export default function ChatInterface({ chatbotId, chatbot = null }) {
       
       // Show success feedback
       if (data.data.metadata.confidence < 0.5) {
-        toast.warning('I\'m not very confident about this answer. You might want to rephrase your question.')
+        toast.warning('Response confidence is low. Consider rephrasing your question.')
       }
       
     } catch (error) {
@@ -147,7 +162,7 @@ export default function ChatInterface({ chatbotId, chatbot = null }) {
       setMessages(prev => [...prev, {
         id: `error_${Date.now()}`,
         role: 'assistant',
-        content: `I'm sorry, I encountered an error: ${error.message}`,
+        content: `I apologize for the inconvenience. ${error.message}`,
         timestamp: new Date().toISOString(),
         status: 'error'
       }])
@@ -166,7 +181,6 @@ export default function ChatInterface({ chatbotId, chatbot = null }) {
     const message = messages.find(m => m.id === messageId)
     if (message) {
       setInputMessage(message.content)
-      // Remove failed message
       setMessages(prev => prev.filter(m => m.id !== messageId))
     }
   }
@@ -189,245 +203,305 @@ export default function ChatInterface({ chatbotId, chatbot = null }) {
       case 'sending':
         return <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
       case 'delivered':
-        return <CheckCircle2 className="w-3 h-3 text-green-500" />
+        return <CheckCircle2 className="w-3 h-3 text-[#10B981]" />
       case 'failed':
-        return <AlertTriangle className="w-3 h-3 text-red-500" />
+        return <AlertTriangle className="w-3 h-3 text-[#EF4444]" />
       default:
         return null
     }
   }
 
-  return (
-    <Card className="h-full flex flex-col">
-      {/* Chat Header */}
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="w-5 h-5 text-blue-600" />
-          <span>{chatbot?.name || 'AI Assistant'}</span>
-          <Badge variant="secondary" className="ml-auto">
-            RAG Enabled
-          </Badge>
-        </CardTitle>
-        
-        {/* Connection Status */}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span>Connected • Session: {sessionId.substring(5, 15)}</span>
-        </div>
-      </CardHeader>
+  /**
+   * Get confidence badge styling
+   */
+  const getConfidenceBadge = (confidence) => {
+    if (!confidence) return null
+    
+    const percentage = Math.round(confidence * 100)
+    let className = 'text-xs'
+    
+    if (confidence >= 0.8) {
+      className += ' bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20'
+    } else if (confidence >= 0.6) {
+      className += ' bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20'
+    } else {
+      className += ' bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20'
+    }
+    
+    return (
+      <Badge variant="outline" className={className}>
+        {percentage}%
+      </Badge>
+    )
+  }
 
-      {/* Messages Area */}
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
-          <div className="space-y-4 py-4">
+  return (
+    <div className="h-screen flex flex-col bg-white">
+      {/* FIXED HEADER - Yahan fixed rahega */}
+      <div className="flex-shrink-0 border-b border-gray-200 bg-white px-4 py-3 sticky top-0 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white"></div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-semibold text-gray-900 text-sm">
+                  {chatbot?.name || 'My Assistant'}
+                </h2>
+                <Badge variant="outline" className="text-xs bg-[#94B9F9]/10 text-[#94B9F9] border-[#94B9F9]/20">
+                  RAG Enabled
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-[#10B981] rounded-full"></div>
+                <span>Connected • Session: {sessionId.substring(5, 15)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-right text-xs text-gray-500">
+            {conversationId && (
+              <div>ID: {conversationId.substring(0, 8)}...</div>
+            )}
+          </div>
+        </div>
+
+        {/* Conversation Status */}
+        <div className="mt-3 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-gray-400" />
+          <span className="text-xs text-gray-600">Conversation active</span>
+          {memoryInfo.hasMemory && (
+            <>
+              <span className="text-gray-300">•</span>
+              <Brain className="w-4 h-4 text-[#F4CAF7]" />
+              <span className="text-xs text-gray-600">Memory enabled</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* SCROLLABLE MESSAGES AREA - Sirf yahan scroll hoga */}
+      <div className="flex-1 overflow-hidden bg-gray-50">
+        <ScrollArea ref={scrollAreaRef} className="h-full">
+          <div className="p-4 space-y-4 min-h-full">
             {/* Welcome Message */}
             {messages.length === 0 && (
-              <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
-                <Bot className="w-6 h-6 text-blue-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-blue-900">
-                    👋 Hello! I'm {chatbot?.name || 'your AI assistant'}.
-                  </p>
-                  <p className="text-sm text-blue-700 mt-1">
-                    I can help answer questions based on the training data provided. 
-                    Just ask me anything!
-                  </p>
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-white" />
                 </div>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Welcome to {chatbot?.name || 'AI Assistant'}
+                </h3>
+                <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
+                  I'm here to help you find information from our knowledge base. 
+                  Ask me anything, and I'll provide accurate answers with sources.
+                </p>
               </div>
             )}
 
             {/* Messages */}
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex items-start gap-3 ${
-                  message.role === 'user' ? 'flex-row-reverse' : ''
-                }`}
-              >
-                {/* Avatar */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                    message.role === 'user'
-                      ? 'bg-gray-100'
-                      : message.status === 'error'
-                      ? 'bg-red-100'
-                      : 'bg-blue-100'
-                  }`}
-                >
-                  {message.role === 'user' ? (
-                    <User className="w-4 h-4 text-gray-600" />
-                  ) : (
-                    <Bot className={`w-4 h-4 ${
-                      message.status === 'error' ? 'text-red-600' : 'text-blue-600'
-                    }`} />
-                  )}
-                </div>
-
-                {/* Message Content */}
-                <div
-                  className={`flex-1 max-w-[80%] ${
-                    message.role === 'user' ? 'text-right' : ''
-                  }`}
-                >
-                  <div
-                    className={`p-3 rounded-lg ${
-                      message.role === 'user'
-                        ? message.status === 'failed'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-600 text-white'
-                        : message.status === 'error'
-                        ? 'bg-red-50 border-red-200 border'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </p>
-
-                    {/* Sources (for AI messages) */}
-                    {message.role === 'assistant' && message.sources?.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                          <Lightbulb className="w-3 h-3" />
-                          Sources used:
-                        </p>
-                        <div className="space-y-1">
-                          {message.sources.map((source, idx) => (
-                            <div
-                              key={idx}
-                              className="text-xs bg-white/50 rounded p-2 border border-gray-200"
+              <div key={message.id} className="flex items-start space-y-0">
+                {message.role === 'user' ? (
+                  // USER MESSAGE (Right aligned)
+                  <div className="w-full flex justify-end">
+                    <div className="max-w-[75%] flex items-end gap-2">
+                      <div className="flex flex-col items-end">
+                        {/* Message bubble */}
+                        <div
+                          className={`px-4 py-2 rounded-2xl rounded-br-md max-w-full ${
+                            message.status === 'failed'
+                              ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20'
+                              : 'bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] text-white'
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed break-words">
+                            {message.content}
+                          </p>
+                        </div>
+                        
+                        {/* Message footer */}
+                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                          <span>{formatTime(message.timestamp)}</span>
+                          {getStatusIcon(message.status)}
+                          {message.status === 'failed' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs h-auto p-1 text-[#EF4444] hover:bg-[#EF4444]/10"
+                              onClick={() => retryMessage(message.id)}
                             >
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium truncate">
-                                  {source.title || source.source}
-                                </span>
-                                <Badge variant="outline" className="text-xs">
-                                  {Math.round(source.score * 100)}%
-                                </Badge>
-                              </div>
-                              <p className="text-gray-600 mt-1 line-clamp-2">
-                                {source.excerpt}
-                              </p>
-                            </div>
-                          ))}
+                              <RefreshCw className="w-3 h-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    )}
-
-                    {/* Metadata (for AI messages) */}
-                    {message.role === 'assistant' && message.metadata && (
-                      <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                        {message.metadata.confidence && (
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${
-                              message.metadata.confidence > 0.8 
-                                ? 'bg-green-50 text-green-700 border-green-200'
-                                : message.metadata.confidence > 0.5
-                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                : 'bg-red-50 text-red-700 border-red-200'
-                            }`}
-                          >
-                            {Math.round(message.metadata.confidence * 100)}% confidence
-                          </Badge>
-                        )}
-                        {message.metadata.chunks_used && (
-                          <span>{message.metadata.chunks_used} sources</span>
-                        )}
-                        {message.metadata.processing_time && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {message.metadata.processing_time}ms
-                          </span>
-                        )}
+                      
+                      {/* User avatar */}
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-gray-600" />
                       </div>
-                    )}
+                    </div>
                   </div>
+                ) : (
+                  // ASSISTANT MESSAGE (Left aligned)
+                  <div className="w-full flex justify-start">
+                    <div className="max-w-[85%] flex items-start gap-3">
+                      {/* Bot avatar */}
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-white" />
+                      </div>
+                      
+                      <div className="flex flex-col">
+                        {/* Message bubble */}
+                        <div
+                          className={`px-4 py-3 rounded-2xl rounded-tl-md ${
+                            message.status === 'error'
+                              ? 'bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444]'
+                              : 'bg-white border border-gray-200 text-gray-900 shadow-sm'
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed break-words">
+                            {message.content}
+                          </p>
 
-                  {/* Message Footer */}
-                  <div
-                    className={`mt-1 flex items-center gap-2 text-xs text-gray-500 ${
-                      message.role === 'user' ? 'justify-end' : ''
-                    }`}
-                  >
-                    <span>{formatTime(message.timestamp)}</span>
-                    {getStatusIcon(message.status)}
-                    
-                    {/* Retry button for failed messages */}
-                    {message.status === 'failed' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs h-auto p-1"
-                        onClick={() => retryMessage(message.id)}
-                      >
-                        Retry
-                      </Button>
-                    )}
+                          {/* Metadata badges */}
+                          {message.role === 'assistant' && message.metadata && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {getConfidenceBadge(message.metadata.confidence)}
+                              
+                              {message.metadata.chunks_used && (
+                                <Badge variant="outline" className="text-xs">
+                                  {message.metadata.chunks_used} sources
+                                </Badge>
+                              )}
+                              
+                              {message.metadata.processing_time && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {message.metadata.processing_time}ms
+                                </Badge>
+                              )}
+
+                              {message.metadata.memory_enhanced && (
+                                <Badge variant="outline" className="text-xs bg-[#F4CAF7]/10 text-[#F4CAF7] border-[#F4CAF7]/20">
+                                  Memory
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Sources */}
+                          {message.sources?.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <h4 className="text-xs font-medium text-gray-600 mb-2">
+                                Sources ({message.sources.length})
+                              </h4>
+                              <div className="space-y-1">
+                                {message.sources.map((source, idx) => (
+                                  <div key={idx} className="bg-gray-50 rounded p-2 text-xs">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <span className="font-medium text-gray-700 truncate">
+                                        {source.title || source.source}
+                                      </span>
+                                      <span className="text-gray-500">
+                                        {Math.round(source.score * 100)}%
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-600 line-clamp-2">
+                                      {source.excerpt}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Message footer */}
+                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                          <span>{formatTime(message.timestamp)}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
 
             {/* Typing Indicator */}
             {isLoading && (
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="w-full flex justify-start">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#94B9F9] to-[#F4CAF7] flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-[#94B9F9] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-[#F4CAF7] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-[#FB8A8F] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-xs text-gray-500">Thinking...</span>
                     </div>
-                    <span className="text-xs text-gray-500">AI is thinking...</span>
                   </div>
                 </div>
               </div>
             )}
+
+            {/* Extra space at bottom for better scrolling */}
+            <div className="h-4"></div>
           </div>
         </ScrollArea>
+      </div>
 
-        {/* Input Area */}
-        <div className="border-t p-4">
-          <form onSubmit={sendMessage} className="flex gap-2">
+      {/* FIXED FOOTER - Yahan bhi fixed rahega */}
+      <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4 sticky bottom-0 z-10">
+        <form onSubmit={sendMessage} className="flex items-center gap-3">
+          <div className="flex-1 relative">
             <Input
               ref={inputRef}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Ask me anything..."
               disabled={isLoading}
-              className="flex-1"
+              className="border-gray-200 focus:border-[#94B9F9] focus:ring-[#94B9F9]/20 bg-gray-50 rounded-full px-4"
               maxLength={1000}
             />
-            <Button
-              type="submit"
-              disabled={isLoading || !inputMessage.trim()}
-              size="icon"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </Button>
-          </form>
-          
-          {/* Input Footer */}
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-            <span>
-              Powered by RAG • {inputMessage.length}/1000 characters
-            </span>
-            {conversationId && (
-              <span>
-                Conversation: {conversationId.substring(0, 8)}...
-              </span>
+          </div>
+          <Button
+            type="submit"
+            disabled={isLoading || !inputMessage.trim()}
+            size="sm"
+            className="bg-gradient-to-r from-[#94B9F9] to-[#F4CAF7] hover:from-[#94B9F9]/90 hover:to-[#F4CAF7]/90 text-white border-0 rounded-full w-10 h-10 p-0"
+          >
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </Button>
+        </form>
+        
+        {/* Footer info */}
+        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+          <div className="flex items-center gap-3">
+            <span>Powered by Lunie-Ai</span>
+            {memoryInfo.hasMemory && (
+              <span>• Memory Active</span>
             )}
           </div>
+          <span className={inputMessage.length > 900 ? 'text-[#F59E0B]' : ''}>
+            {inputMessage.length}/1000
+          </span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

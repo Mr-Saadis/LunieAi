@@ -42,17 +42,42 @@ export class GeminiProvider extends BaseAIProvider {
       
       const duration = Date.now() - startTime;
 
-      return {
-        content: response.text(),
-        usage: {
-          promptTokens: await this.estimateTokens(formattedMessages),
-          completionTokens: await this.estimateTokens([{ parts: [{ text: response.text() }] }]),
-          totalTokens: 0 // Gemini doesn't provide exact token counts
-        },
-        model: this.model,
-        duration,
-        provider: 'gemini'
-      };
+
+       const usageMetadata = result.response.usageMetadata || {}
+
+
+
+
+      // return {
+      //   content: response.text(),
+      //   usage: {
+      //     promptTokens: await this.estimateTokens(formattedMessages),
+      //     completionTokens: await this.estimateTokens([{ parts: [{ text: response.text() }] }]),
+      //     totalTokens: 0 // Gemini doesn't provide exact token counts
+      //   },
+      //   model: this.model,
+      //   duration,
+      //   provider: 'gemini'
+      // };
+
+       return {
+      success: true,
+      content: response.text(),
+      usage: {
+        promptTokens: usageMetadata.promptTokenCount || this.estimateTokens(formattedMessages),
+        completionTokens: usageMetadata.candidatesTokenCount || this.estimateTokens([{ parts: [{ text: response.text() }] }]),
+        totalTokens: usageMetadata.totalTokenCount || 0
+      },
+      model: this.model,
+      duration,
+      provider: 'gemini'
+    }
+
+
+
+
+
+
 
     } catch (error) {
       this.handleError(error);

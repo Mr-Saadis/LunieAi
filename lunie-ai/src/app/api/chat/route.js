@@ -9,6 +9,7 @@ import { createRouteClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { getRAGService } from '@/lib/rag/rag-service'
 import { z } from 'zod'
+import { getMemoryIntegration } from '@/lib/memory/memory-integration'
 
 // FIXED Request validation schema - handle null values properly
 const chatRequestSchema = z.object({
@@ -81,6 +82,18 @@ export async function POST(request) {
     
     const { message, chatbotId, conversationId, context } = validatedData
     
+const memoryIntegration = getMemoryIntegration()
+  
+  // ADD THIS: Enhance with memory BEFORE your existing RAG processing
+  const memoryResult = await memoryIntegration.enhanceWithMemory({
+    query: message,
+    chatbotId,
+    conversationId,
+    sessionId: context?.sessionId,
+    context
+  })
+  
+
     // Initialize Supabase client
     const cookieStore = await cookies()
     const supabase = createRouteClient(() => cookieStore)
@@ -131,45 +144,18 @@ export async function POST(request) {
     rateLimitData.count++
     
     // Get or create conversation
-    let conversation
-    if (conversationId) {
-      const { data } = await supabase
-        .from('conversations')
-        .select('id, chatbot_id')
-        .eq('id', conversationId)
-        .eq('chatbot_id', chatbotId)
-        .single()
-      
-      conversation = data
-    }
+    // 
     
-    if (!conversation) {
-      const { data: newConversation, error: convError } = await supabase
-        .from('conversations')
-        .insert({
-          chatbot_id: chatbotId,
-          session_id: context?.sessionId || generateSessionId(),
-          visitor_info: {  // ← Use existing visitor_info column instead of metadata
-            userAgent: request.headers.get('user-agent'),
-            ip: request.headers.get('x-forwarded-for') || 'unknown',
-            startedAt: new Date().toISOString(),
-            ...context?.metadata
-          }
-        })
-        .select()
-        .single()
-      
-      if (convError) {
-        console.error('❌ Failed to create conversation:', convError)
-        return NextResponse.json({
-          error: 'Failed to create conversation',
-          details: convError.message
-        }, { status: 500 })
-      }
-      
-      conversation = newConversation
-      console.log('✅ New conversation created:', conversation.id)
-    }
+
+    let conversation = memoryResult.conversation
+
+if (!conversation) {
+  console.error('❌ No conversation available from memory integration')
+  return NextResponse.json({
+    error: 'Failed to initialize conversation',
+    details: 'Memory integration failed to create conversation'
+  }, { status: 500 })
+}
     
     // Store user message - Use existing schema
     const { data: userMessage, error: messageError } = await supabase
@@ -203,7 +189,7 @@ export async function POST(request) {
     try {
       const ragService = getRAGService()
       
-      ragResult = await ragService.processQuery(message, chatbotId, {
+      ragResult = await ragService.processQuery(memoryResult.enhancedQuery || message, chatbotId, {
         userId: context?.userId || 'anonymous',
         conversationId: conversation.id,
         temperature: 0.7,
@@ -227,6 +213,8 @@ export async function POST(request) {
         metadata: { error: true }
       }
     }
+
+   
     
     if (!ragResult.success) {
       // Still provide a helpful response even if RAG fails
@@ -298,6 +286,8 @@ export async function POST(request) {
         messageId: aiMessage.id,
         sources: ragResult.sources || [],
         metadata: {
+          memory_enhanced: memoryResult.hasMemory,
+        memory_context_length: memoryResult.memoryContext?.memoryLength || 0,
           confidence: ragResult.metadata?.confidence || 0,
           processing_time: totalDuration,
           chunks_used: ragResult.metadata?.chunks_used || 0,
