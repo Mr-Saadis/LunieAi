@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${poppins.className} bg-gray-50 text-gray-900 antialiased`}>
          <LunieAiWidget 
-          chatbotId="9604f284-2cd9-4d4b-9857-a7b16991af1c"
+          chatbotId="63f274da-658d-418e-a637-8d2765bb9185"
           config={{
             primaryColor: '#3B82F6',
             welcomeMessage: 'Hello! How can I assist you today?',

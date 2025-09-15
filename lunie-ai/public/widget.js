@@ -16,7 +16,7 @@
 
 //     async init(config) {
 //       if (this.isInitialized) return;
-      
+
 //       this.config = {
 //         position: 'bottom-right',
 //         theme: 'default',
@@ -106,7 +106,7 @@
 
 //       // Create shadow DOM for style isolation
 //       this.shadowRoot = container.attachShadow({ mode: 'open' });
-      
+
 //       // Add styles to shadow DOM
 //       const styles = this.createStyles();
 //       this.shadowRoot.appendChild(styles);
@@ -163,7 +163,7 @@
 //           color: white;
 //           position: relative;
 //         }
-        
+
 //         .widget-button:hover {
 //           transform: translateY(-2px);
 //           box-shadow: 0 6px 20px rgba(0,0,0,0.2);
@@ -465,7 +465,7 @@
 //             height: 450px;
 //             bottom: 70px;
 //           }
-          
+
 //           .widget-button {
 //             width: 50px;
 //             height: 50px;
@@ -820,7 +820,7 @@
 
 //     async init(config) {
 //       if (this.isInitialized) return;
-      
+
 //       // Default config - will be overridden by database settings
 //       this.config = {
 //         position: 'bottom-right',
@@ -839,7 +839,7 @@
 //         // STEP 1: Fetch chatbot-specific configuration from database
 //         console.log('Fetching chatbot configuration...');
 //         const chatbotConfig = await this.fetchChatbotConfig();
-        
+
 //         // Override defaults with database settings
 //         if (chatbotConfig) {
 //           this.config = {
@@ -932,7 +932,7 @@
 
 //       // Create shadow DOM for style isolation
 //       this.shadowRoot = container.attachShadow({ mode: 'open' });
-      
+
 //       // Add styles to shadow DOM
 //       const styles = this.createStyles();
 //       this.shadowRoot.appendChild(styles);
@@ -990,7 +990,7 @@
 //           position: relative;
 //           overflow: hidden;
 //         }
-        
+
 //         .widget-button:hover {
 //           transform: translateY(-2px);
 //           box-shadow: 0 6px 20px rgba(0,0,0,0.2);
@@ -1306,7 +1306,7 @@
 //             height: 450px;
 //             bottom: 70px;
 //           }
-          
+
 //           .widget-button {
 //             width: 50px;
 //             height: 50px;
@@ -1341,7 +1341,7 @@
 //     createWidgetElements() {
 //       const widget = document.createElement('div');
 //       widget.className = 'widget-container';
-      
+
 //       // Determine button content - custom icon or default SVG
 //       const buttonContent = this.config.customIconUrl 
 //         ? `<img src="${this.config.customIconUrl}" alt="Chat" class="custom-icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -1562,7 +1562,7 @@
 
 //       const avatarClass = role === 'user' ? 'user-avatar' : 'bot-avatar';
 //       let avatarContent = role === 'user' ? 'U' : 'AI';
-      
+
 //       // Use custom icon for bot avatar if available
 //       if (role === 'assistant' && this.config.customIconUrl) {
 //         avatarContent = `<img src="${this.config.customIconUrl}" alt="AI" class="avatar-image" onerror="this.style.display='none'; this.parentNode.innerHTML='AI';">`;
@@ -1582,7 +1582,7 @@
 //       const typingElement = document.createElement('div');
 //       typingElement.className = 'message assistant';
 //       typingElement.id = 'typing-indicator';
-      
+
 //       let avatarContent = 'AI';
 //       if (this.config.customIconUrl) {
 //         avatarContent = `<img src="${this.config.customIconUrl}" alt="AI" class="avatar-image" onerror="this.style.display='none'; this.parentNode.innerHTML='AI';">`;
@@ -1663,7 +1663,7 @@
  * LunieAI Enhanced Chat Widget - UI Improved + Database Icon Integration
  * Features: Better mobile UI, database icon loading, enhanced animations
  */
-(function() {
+(function () {
   'use strict';
 
   // Prevent duplicate initialization
@@ -1685,7 +1685,7 @@
         console.warn('LunieAI Widget already initialized');
         return;
       }
-      
+
       // Default config - will be overridden by database settings
       this.config = {
         position: 'bottom-right',
@@ -1701,10 +1701,14 @@
       };
 
       try {
+
+
+
+
         // Fetch chatbot-specific configuration from database
         console.log('Fetching chatbot configuration...');
         const chatbotConfig = await this.fetchChatbotConfig();
-        
+
         // Override defaults with database settings
         if (chatbotConfig) {
           this.config = {
@@ -1724,6 +1728,19 @@
           console.warn('LunieAI Widget: Access denied for this domain');
           return;
         }
+
+        // Existing widget ko clean up karo
+        if (window.LunieAiWidget && window.LunieAiWidget.isInitialized) {
+          // Remove existing widget from DOM
+          const existingWidget = document.getElementById('lunieai-widget-container');
+          if (existingWidget) {
+            existingWidget.remove();
+          }
+          // Reset widget
+          window.LunieAiWidget.isInitialized = false;
+          window.LunieAiWidget.shadowRoot = null;
+        }
+
 
         // Create widget with final configuration
         this.createWidget();
@@ -1797,7 +1814,7 @@
 
       // Create shadow DOM for style isolation
       this.shadowRoot = container.attachShadow({ mode: 'open' });
-      
+
       // Add styles to shadow DOM
       const styles = this.createStyles();
       this.shadowRoot.appendChild(styles);
@@ -1815,7 +1832,7 @@
 
     getPositionStyles() {
       const isMobile = window.innerWidth <= 768;
-      
+
       if (isMobile) {
         // Mobile: Full width bottom positioning
         return 'bottom: 10px; left: 10px; right: 10px;';
@@ -1911,8 +1928,9 @@
 
         /* Enhanced Chat Window */
         .widget-chat {
-          width: 100%;
-          max-width: 380px;
+          width: 90%;
+          min-width: 380px;
+          max-width: 400px;
           height: 520px;
           background: white;
           border-radius: 20px;
@@ -1946,7 +1964,7 @@
         .chat-header {
           background: linear-gradient(135deg, ${this.config.primaryColor}, ${this.adjustColor(this.config.primaryColor, -15)});
           color: white;
-          padding: 20px;
+          padding: 16px 24px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -2133,24 +2151,104 @@
           object-fit: cover;
         }
 
-        /* Enhanced Typing Indicator */
-        .typing-indicator {
-          display: flex;
-          gap: 6px;
-          padding: 14px 18px;
-          align-items: center;
-        }
+        // /* Enhanced Typing Indicator */
+        // .typing-indicator {
+        //   display: flex;
+        //   gap: 6px;
+        //   padding: 14px 18px;
+        //   align-items: center;
+        // }
 
-        .typing-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #94a3b8, #64748b);
-          animation: typing 1.4s infinite;
-        }
+        // .typing-dot {
+        //   width: 8px;
+        //   height: 8px;
+        //   border-radius: 50%;
+        //   background: linear-gradient(135deg, #94a3b8, #64748b);
+        //   animation: typing 1.4s infinite;
+        // }
 
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        // .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        // .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+// Enhanced typing indicator CSS (replace previous typing CSS)
+.typing-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 100%;
+  animation: messageSlide 0.3s ease-out;
+  padding: 0;
+}
+
+.typing-bubble {
+  background: white;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 6px;
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: ${this.config.primaryColor};
+  animation: typingPulse 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingPulse {
+  0%, 60%, 100% { 
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  30% { 
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+.thinking-text {
+  color: #64748b;
+  font-size: 14px;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+// CSS mein ye add karo (existing typing CSS ke saath)
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.thinking-text {
+  display: inline;
+  color: #64748b;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.message-bubble .typing-dots {
+  vertical-align: middle;
+}
+
+
 
         @keyframes typing {
           0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -2159,7 +2257,7 @@
 
         /* Enhanced Input Area */
         .chat-input {
-          padding: 20px;
+          padding: 10px;
           border-top: 1px solid #e2e8f0;
           background: white;
           position: relative;
@@ -2241,7 +2339,7 @@
         /* Enhanced Powered By */
         .powered-by {
           order: 3;
-          padding: 12px 20px;
+          padding: 10px 10px;
           background: white;
           border-top: 1px solid #e2e8f0;
           border-radius: 0 0 20px 20px;
@@ -2249,7 +2347,7 @@
 
         .powered-by a {
           color: #94a3b8;
-          text-decoration: none;
+          text-decoration : none;
           font-size: 12px;
           transition: all 0.2s;
           display: flex;
@@ -2270,7 +2368,7 @@
           }
           
           .widget-chat {
-            width: 100%;
+            width: 90%;
             max-width: none;
             height: 480px;
             border-radius: 20px 20px 0 0;
@@ -2289,11 +2387,11 @@
           }
           
           .chat-input {
-            padding: 16px;
+            padding: 10px;
           }
 
           .powered-by {
-            padding: 10px 16px;
+            padding: 8px 10px;
           }
         }
 
@@ -2353,9 +2451,9 @@
     createWidgetElements() {
       const widget = document.createElement('div');
       widget.className = 'widget-container';
-      
+
       // Enhanced button content with database icon support
-      const buttonContent = this.config.customIconUrl 
+      const buttonContent = this.config.customIconUrl
         ? `<img src="${this.escapeHtml(this.config.customIconUrl)}" alt="Chat" class="custom-icon" 
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
              onload="this.nextElementSibling.style.display='none';">
@@ -2426,19 +2524,19 @@
       return widget;
     }
 
-   bindEvents() {
-  const toggleButton = this.shadowRoot?.getElementById('widget-toggle');
-  const closeButton = this.shadowRoot?.getElementById('close-chat');
-  const chatContainer = this.shadowRoot?.getElementById('widget-chat');
-  const messageInput = this.shadowRoot?.getElementById('message-input');
-  const sendButton = this.shadowRoot?.getElementById('send-button');
-  const notificationDot = this.shadowRoot?.getElementById('notification-dot');
+    bindEvents() {
+      const toggleButton = this.shadowRoot?.getElementById('widget-toggle');
+      const closeButton = this.shadowRoot?.getElementById('close-chat');
+      const chatContainer = this.shadowRoot?.getElementById('widget-chat');
+      const messageInput = this.shadowRoot?.getElementById('message-input');
+      const sendButton = this.shadowRoot?.getElementById('send-button');
+      const notificationDot = this.shadowRoot?.getElementById('notification-dot');
 
-  // Null checks add karo
-  if (!toggleButton || !closeButton || !chatContainer || !messageInput || !sendButton) {
-    console.error('Widget elements not found');
-    return;
-  }
+      // Null checks add karo
+      if (!toggleButton || !closeButton || !chatContainer || !messageInput || !sendButton) {
+        console.error('Widget elements not found');
+        return;
+      }
       // Toggle chat open/close
       toggleButton.addEventListener('click', () => {
         this.isOpen = !this.isOpen;
@@ -2484,17 +2582,17 @@
         messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
       });
 
-    
-// Resize handler fix
-window.addEventListener('resize', this.debounce(() => {
-  if (this.shadowRoot) {
-    const widgetContainer = this.shadowRoot.querySelector('.widget-container');
-    const container = widgetContainer?.parentElement;
-    if (container) {
-      container.style.cssText = `...`;
-    }
-  }
-}, 250));
+
+      // Resize handler fix
+      window.addEventListener('resize', this.debounce(() => {
+        if (this.shadowRoot) {
+          const widgetContainer = this.shadowRoot.querySelector('.widget-container');
+          const container = widgetContainer?.parentElement;
+          if (container) {
+            container.style.cssText = `...`;
+          }
+        }
+      }, 250));
 
       // Show notification dot when chat is closed and new message comes
       this.showNotification = () => {
@@ -2506,7 +2604,7 @@ window.addEventListener('resize', this.debounce(() => {
     }
 
     restoreButtonContent(toggleButton) {
-      const buttonContent = this.config.customIconUrl 
+      const buttonContent = this.config.customIconUrl
         ? `<img src="${this.escapeHtml(this.config.customIconUrl)}" alt="Chat" class="custom-icon" 
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
              onload="this.nextElementSibling.style.display='none';">
@@ -2603,7 +2701,7 @@ window.addEventListener('resize', this.debounce(() => {
       `;
 
       messagesContainer.appendChild(messageElement);
-      
+
       // Smooth scroll to bottom
       requestAnimationFrame(() => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -2617,30 +2715,56 @@ window.addEventListener('resize', this.debounce(() => {
         : 'AI';
     }
 
-    showTypingIndicator() {
-      const messagesContainer = this.shadowRoot.getElementById('chat-messages');
-      
-      // Remove existing typing indicator if any
-      this.hideTypingIndicator();
-      
-      const typingElement = document.createElement('div');
-      typingElement.className = 'message assistant';
-      typingElement.id = 'typing-indicator';
-      
-      typingElement.innerHTML = `
-        <div class="avatar bot-avatar">${this.getBotAvatarContent()}</div>
-        <div class="message-bubble">
-          <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
-        </div>
-      `;
+    // showTypingIndicator() {
+    //   const messagesContainer = this.shadowRoot.getElementById('chat-messages');
 
-      messagesContainer.appendChild(typingElement);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    //   // Remove existing typing indicator if any
+    //   this.hideTypingIndicator();
+
+    //   const typingElement = document.createElement('div');
+    //   typingElement.className = 'message assistant';
+    //   typingElement.id = 'typing-indicator';
+
+    //   typingElement.innerHTML = `
+    //     <div class="avatar bot-avatar">${this.getBotAvatarContent()}</div>
+    //     <div class="message-bubble">
+    //       <div class="typing-indicator">
+    //         <div class="typing-dot"></div>
+    //         <div class="typing-dot"></div>
+    //         <div class="typing-dot"></div>
+    //       </div>
+    //     </div>
+    //   `;
+
+    //   messagesContainer.appendChild(typingElement);
+    //   messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // }
+// showTypingIndicator method ko completely replace karo
+showTypingIndicator() {
+  const messagesContainer = this.shadowRoot.getElementById('chat-messages');
+  this.hideTypingIndicator();
+  
+  const typingElement = document.createElement('div');
+  typingElement.className = 'message assistant'; // Existing message class use karo
+  typingElement.id = 'typing-indicator';
+  
+  typingElement.innerHTML = `
+    <div class="avatar bot-avatar">${this.getBotAvatarContent()}</div>
+    <div class="message-bubble">
+      <div class="typing-dots">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+      <span class="thinking-text">Thinking...</span>
+    </div>
+  `;
+  
+  messagesContainer.appendChild(typingElement);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+
 
     hideTypingIndicator() {
       const typingElement = this.shadowRoot.getElementById('typing-indicator');
@@ -2701,12 +2825,12 @@ window.addEventListener('resize', this.debounce(() => {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
       `;
-      
+
       errorDiv.innerHTML = `
         <strong>Chat Widget Error</strong><br>
         ${this.escapeHtml(message)}
       `;
-      
+
       document.body.appendChild(errorDiv);
 
       // Auto remove after 8 seconds
