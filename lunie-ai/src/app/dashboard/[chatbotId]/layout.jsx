@@ -350,6 +350,7 @@ export default function ChatbotLayout({ children }) {
           <div className="p-2">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 py-1">
               Your Chatbots ({chatbots.length})
+              
             </div>
           </div>
 
@@ -514,6 +515,7 @@ export default function ChatbotLayout({ children }) {
                   Settings
                 </Link>
               </Button>
+              
             </div>
           </div>
         </div>

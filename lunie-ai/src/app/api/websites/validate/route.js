@@ -83,7 +83,7 @@ async function validateUrl(url) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'User-Agent': 'RagBot/1.0 (+https://yourapp.com/bot)'
+        'User-Agent': 'RagBot/1.0 (+https://yourapp.com/bot)' 
       },
       signal: controller.signal
     })
