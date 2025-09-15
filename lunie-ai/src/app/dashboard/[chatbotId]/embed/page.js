@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import EmbedCodeGenerator from '@/components/embed/EmbedCodeGenerator'
 import { notFound, redirect } from 'next/navigation'
-import { getUser } from '@/lib/auth'
+// import { getUser } from '@/lib/auth'
 
 /**
  * Embed code generation page
