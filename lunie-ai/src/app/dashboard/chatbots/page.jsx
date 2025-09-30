@@ -279,7 +279,7 @@ export default function ChatbotsPage() {
       'gpt-4o': 'GPT-4o',
       'gpt-4o-mini': 'GPT-4o Mini',
       'gemini-pro': 'Gemini Pro',
-      'gemini-1.5-flash': 'Gemini 1.5 Flash'
+      'gemini-2.5-flash': 'Gemini 1.5 Flash'
     }
     return models[model] || model
   }

@@ -260,7 +260,7 @@ Be knowledgeable about listings, neighborhoods, and the buying/selling process.`
    */
   optimizeForModel(prompt, model) {
     const optimizations = {
-      'gemini-1.5-flash': {
+      'gemini-2.5-flash': {
         maxLength: 30000,
         style: 'conversational'
       },
@@ -274,7 +274,7 @@ Be knowledgeable about listings, neighborhoods, and the buying/selling process.`
       }
     };
 
-    const config = optimizations[model] || optimizations['gemini-1.5-flash'];
+    const config = optimizations[model] || optimizations['gemini-2.5-flash'];
     
     // Truncate if needed
     if (prompt.length > config.maxLength) {

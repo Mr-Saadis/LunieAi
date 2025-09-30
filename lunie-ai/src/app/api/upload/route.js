@@ -656,173 +656,450 @@ else if (file.type === 'application/vnd.openxmlformats-officedocument.wordproces
   console.log('=== DOCX PROCESSING END ===')
 } 
 // XLSX PROCESSING WITH VECTORS
+// else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+//   console.log('=== XLSX PROCESSING START ===')
+//   console.log('This is an XLSX file, attempting to process...')
+  
+//   try {
+//     // Update status to processing
+//     await supabase
+//       .from('training_data')
+//       .update({ processing_status: 'processing' })
+//       .eq('id', trainingData.id)
+
+//     console.log('Status updated to processing')
+
+//     // Import and process XLSX
+//     const { processXlsx } = await import('@/lib/processors/xlsxProcessor')
+//     console.log('✅ XLSX processor imported successfully')
+
+//     const xlsxResult = await processXlsx(buffer)
+//     console.log('XLSX processing completed:', xlsxResult.success)
+
+//     if (xlsxResult.success) {
+//       console.log('✅ XLSX processing successful!')
+//       console.log('- Text length:', xlsxResult.text?.length || 0)
+//       console.log('- Word count:', xlsxResult.metadata?.wordCount || 0)
+//       console.log('- Chunks created:', xlsxResult.chunks?.length || 0)
+//       console.log('- Sheets processed:', xlsxResult.metadata?.totalSheets || 0)
+
+//       // Update training data with processed content
+//       await supabase
+//         .from('training_data')
+//         .update({
+//           content: xlsxResult.text,
+//           processing_status: 'completed',
+//           processed_at: new Date().toISOString(),
+//           chunk_count: xlsxResult.chunks?.length || 0,
+//           metadata: xlsxResult.metadata || {}
+//         })
+//         .eq('id', trainingData.id)
+
+//       // Store chunks and process vectors
+//       if (xlsxResult.chunks && xlsxResult.chunks.length > 0) {
+//         const chunkInserts = xlsxResult.chunks.map((chunk, index) => ({
+//           training_data_id: trainingData.id,
+//           content: chunk,
+//           chunk_index: index,
+//           metadata: { 
+//             sheet: Math.floor(index / 3) + 1,
+//             wordCount: chunk.split(/\s+/).filter(word => word.trim().length > 0).length
+//           }
+//         }));
+
+//         await supabase.from('content_chunks').insert(chunkInserts);
+//         console.log(`✅ Stored ${chunkInserts.length} chunks in database`)
+        
+//         // ========================================
+//         // VECTOR PROCESSING FOR XLSX - START
+//         // ========================================
+//         console.log('🚀 Starting vector processing for XLSX chunks...')
+        
+//         try {
+//           const { getGeminiEmbeddings } = await import('@/lib/ai/embeddings/gemini-embeddings')
+//           const { getQdrantManager } = await import('@/lib/vector/qdrant-client')
+          
+//           const embeddings = getGeminiEmbeddings()
+//           const qdrant = getQdrantManager()
+          
+//           await qdrant.initialize()
+//           await qdrant.createCollection()
+          
+//           const namespace = qdrant.createNamespace(user.id, chatbotId)
+          
+//           const chunksForEmbedding = xlsxResult.chunks.map((chunkText, index) => ({
+//             id: `${trainingData.id}_chunk_${index}`,
+//             content: chunkText,
+//             metadata: {
+//               trainingDataId: trainingData.id,
+//               chatbotId: chatbotId,
+//               chunkIndex: index,
+//               type: 'xlsx',
+//               fileName: file.name,
+//               sheet: Math.floor(index / 3) + 1,
+//               totalSheets: xlsxResult.metadata?.totalSheets || 1,
+//               source: 'file_upload'
+//             }
+//           }))
+          
+//           console.log(`Generating embeddings for ${chunksForEmbedding.length} XLSX chunks...`)
+//           const embeddingResults = await embeddings.embedDocumentChunks(chunksForEmbedding)
+//           const successfulEmbeddings = embeddingResults.filter(e => !e.error)
+          
+//           console.log(`✅ Generated ${successfulEmbeddings.length}/${chunksForEmbedding.length} embeddings`)
+          
+//           if (successfulEmbeddings.length > 0) {
+//             const vectorsWithMetadata = successfulEmbeddings.map(emb => ({
+//               ...emb,
+//               metadata: {
+//                 ...emb.metadata,
+//                 trainingDataId: trainingData.id,
+//                 namespace: namespace
+//               }
+//             }))
+            
+//             await qdrant.upsertVectors(vectorsWithMetadata, namespace)
+//             console.log(`✅ Stored ${successfulEmbeddings.length} XLSX vectors in Qdrant`)
+            
+//             await supabase
+//               .from('training_data')
+//               .update({
+//                 metadata: {
+//                   ...xlsxResult.metadata,
+//                   vectors: successfulEmbeddings.length,
+//                   vectorsProcessedAt: new Date().toISOString()
+//                 }
+//               })
+//               .eq('id', trainingData.id)
+//           }
+//         } catch (vectorError) {
+//           console.error('XLSX vector processing failed:', vectorError)
+//         }
+//         // ========================================
+//         // VECTOR PROCESSING FOR XLSX - END
+//         // ========================================
+//       }
+
+//       processingResult = {
+//         processed: true,
+//         chunks_created: xlsxResult.chunks?.length || 0,
+//         word_count: xlsxResult.metadata?.wordCount || 0,
+//         sheets_processed: xlsxResult.metadata?.totalSheets || 0,
+//         text_length: xlsxResult.text?.length || 0,
+//         message: 'XLSX uploaded and processed successfully with vectors!'
+//       }
+//     } else {
+//       // Handle XLSX processing failure
+//       await supabase
+//         .from('training_data')
+//         .update({ 
+//           processing_status: 'failed',
+//           processing_error: xlsxResult.error
+//         })
+//         .eq('id', trainingData.id)
+
+//       processingResult = {
+//         processed: false,
+//         error: xlsxResult.error,
+//         message: 'File uploaded but XLSX processing failed.'
+//       }
+//     }
+//   } catch (error) {
+//     console.error('❌ XLSX processing error:', error)
+//     await supabase
+//       .from('training_data')
+//       .update({ 
+//         processing_status: 'failed',
+//         processing_error: error.message
+//       })
+//       .eq('id', trainingData.id)
+
+//     processingResult = {
+//       processed: false,
+//       error: error.message,
+//       message: 'File uploaded but XLSX processing failed.'
+//     }
+//   }
+//   console.log('=== XLSX PROCESSING END ===')
+// }
+
+
+// ============================================
+// XLSX PROCESSING WITH VECTORS - REFACTORED
+// ============================================
 else if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-  console.log('=== XLSX PROCESSING START ===')
-  console.log('This is an XLSX file, attempting to process...')
+  console.log('=== XLSX PROCESSING START ===');
+  console.log('📊 File details:', {
+    name: file.name,
+    size: file.size,
+    type: file.type
+  });
   
   try {
-    // Update status to processing
+    // Step 1: Update status to processing
     await supabase
       .from('training_data')
       .update({ processing_status: 'processing' })
-      .eq('id', trainingData.id)
+      .eq('id', trainingData.id);
 
-    console.log('Status updated to processing')
+    console.log('✅ Status updated to processing');
 
-    // Import and process XLSX
-    const { processXlsx } = await import('@/lib/processors/xlsxProcessor')
-    console.log('✅ XLSX processor imported successfully')
+    // Step 2: Import and process XLSX
+    const { processXlsx } = await import('@/lib/processors/xlsxProcessor');
+    console.log('✅ XLSX processor imported');
 
-    const xlsxResult = await processXlsx(buffer)
-    console.log('XLSX processing completed:', xlsxResult.success)
+    // Step 3: Process the spreadsheet
+    const xlsxResult = await processXlsx(buffer);
+    
+    if (!xlsxResult.success) {
+      throw new Error(xlsxResult.error || 'XLSX processing failed');
+    }
 
-    if (xlsxResult.success) {
-      console.log('✅ XLSX processing successful!')
-      console.log('- Text length:', xlsxResult.text?.length || 0)
-      console.log('- Word count:', xlsxResult.metadata?.wordCount || 0)
-      console.log('- Chunks created:', xlsxResult.chunks?.length || 0)
-      console.log('- Sheets processed:', xlsxResult.metadata?.totalSheets || 0)
+    console.log('✅ XLSX processing successful!');
+    console.log('📊 Processing results:', {
+      chunks: xlsxResult.chunks?.length || 0,
+      sheets: xlsxResult.metadata?.totalSheets || 0,
+      rows: xlsxResult.metadata?.totalRows || 0,
+      columns: xlsxResult.metadata?.maxColumns || 0
+    });
 
-      // Update training data with processed content
-      await supabase
-        .from('training_data')
-        .update({
-          content: xlsxResult.text,
-          processing_status: 'completed',
-          processed_at: new Date().toISOString(),
-          chunk_count: xlsxResult.chunks?.length || 0,
-          metadata: xlsxResult.metadata || {}
-        })
-        .eq('id', trainingData.id)
+    // Step 4: Prepare text content from chunks
+    const textContent = xlsxResult.chunks
+      .map(chunk => chunk.content || chunk)
+      .join('\n\n');
 
-      // Store chunks and process vectors
-      if (xlsxResult.chunks && xlsxResult.chunks.length > 0) {
-        const chunkInserts = xlsxResult.chunks.map((chunk, index) => ({
+    const wordCount = textContent.split(/\s+/).filter(w => w.trim()).length;
+
+    // Step 5: Update database with processed content
+    await supabase
+      .from('training_data')
+      .update({
+        content: textContent,
+        processing_status: 'completed',
+        processed_at: new Date().toISOString(),
+        chunk_count: xlsxResult.chunks?.length || 0,
+        metadata: {
+          ...xlsxResult.metadata,
+          wordCount,
+          processingMethod: 'enhanced_xlsx_processor'
+        }
+      })
+      .eq('id', trainingData.id);
+
+    console.log('✅ Database updated with processed content');
+
+    // Step 6: Store chunks in content_chunks table
+    if (xlsxResult.chunks && xlsxResult.chunks.length > 0) {
+      const chunkInserts = xlsxResult.chunks.map((chunk, index) => {
+        const chunkContent = typeof chunk === 'string' ? chunk : chunk.content;
+        const chunkMetadata = typeof chunk === 'object' ? chunk.metadata : {};
+        
+        return {
           training_data_id: trainingData.id,
-          content: chunk,
+          content: chunkContent,
           chunk_index: index,
-          metadata: { 
-            sheet: Math.floor(index / 3) + 1,
-            wordCount: chunk.split(/\s+/).filter(word => word.trim().length > 0).length
+          metadata: {
+            ...chunkMetadata,
+            sheetName: chunkMetadata.sheetName || 'unknown',
+            chunkType: chunkMetadata.chunkType || 'data',
+            wordCount: chunkContent.split(/\s+/).filter(w => w.trim()).length
           }
-        }));
+        };
+      });
 
-        await supabase.from('content_chunks').insert(chunkInserts);
-        console.log(`✅ Stored ${chunkInserts.length} chunks in database`)
+      const { error: chunkInsertError } = await supabase
+        .from('content_chunks')
+        .insert(chunkInserts);
+
+      if (chunkInsertError) {
+        console.error('⚠️ Warning: Failed to insert chunks:', chunkInsertError);
+        // Continue processing - not critical
+      } else {
+        console.log(`✅ Stored ${chunkInserts.length} chunks in database`);
+      }
+
+      // ========================================
+      // VECTOR PROCESSING - START
+      // ========================================
+      console.log('🚀 Starting vector processing...');
+      
+      try {
+        // Import vector processing dependencies
+        const { getGeminiEmbeddings } = await import('@/lib/ai/embeddings/gemini-embeddings');
+        const { getQdrantManager } = await import('@/lib/vector/qdrant-client');
         
-        // ========================================
-        // VECTOR PROCESSING FOR XLSX - START
-        // ========================================
-        console.log('🚀 Starting vector processing for XLSX chunks...')
+        const embeddings = getGeminiEmbeddings();
+        const qdrant = getQdrantManager();
         
-        try {
-          const { getGeminiEmbeddings } = await import('@/lib/ai/embeddings/gemini-embeddings')
-          const { getQdrantManager } = await import('@/lib/vector/qdrant-client')
+        // Initialize Qdrant
+        await qdrant.initialize();
+        await qdrant.createCollection();
+        
+        console.log('✅ Qdrant initialized');
+        
+        // Create namespace for this chatbot
+        const namespace = qdrant.createNamespace(user.id, chatbotId);
+        console.log('📁 Namespace:', namespace);
+        
+        // Prepare chunks for embedding
+        const chunksForEmbedding = xlsxResult.chunks.map((chunk, index) => {
+          const chunkContent = typeof chunk === 'string' ? chunk : chunk.content;
+          const chunkMeta = typeof chunk === 'object' ? chunk.metadata : {};
           
-          const embeddings = getGeminiEmbeddings()
-          const qdrant = getQdrantManager()
-          
-          await qdrant.initialize()
-          await qdrant.createCollection()
-          
-          const namespace = qdrant.createNamespace(user.id, chatbotId)
-          
-          const chunksForEmbedding = xlsxResult.chunks.map((chunkText, index) => ({
+          return {
             id: `${trainingData.id}_chunk_${index}`,
-            content: chunkText,
+            content: chunkContent,
             metadata: {
               trainingDataId: trainingData.id,
               chatbotId: chatbotId,
               chunkIndex: index,
               type: 'xlsx',
               fileName: file.name,
-              sheet: Math.floor(index / 3) + 1,
+              sheetName: chunkMeta.sheetName || 'unknown',
+              chunkType: chunkMeta.chunkType || 'data',
               totalSheets: xlsxResult.metadata?.totalSheets || 1,
-              source: 'file_upload'
+              source: 'file_upload',
+              // Add query hints for better retrieval
+              queryHints: {
+                isOverview: chunkMeta.chunkType === 'overview',
+                isSummary: chunkMeta.chunkType === 'summary_statistics',
+                isDataRecords: chunkMeta.chunkType === 'data_records',
+                isHeaders: chunkMeta.chunkType === 'header_definition',
+                isNumericData: chunkMeta.numericColumns?.length > 0,
+                hasCalculations: chunkContent.includes('Average') || chunkContent.includes('Total')
+              }
             }
-          }))
+          };
+        });
+        
+        console.log(`📊 Prepared ${chunksForEmbedding.length} chunks for embedding`);
+        
+        // Generate embeddings with progress tracking
+        let embeddingResults = [];
+        const batchSize = 10; // Process in batches to avoid overwhelming API
+        
+        for (let i = 0; i < chunksForEmbedding.length; i += batchSize) {
+          const batch = chunksForEmbedding.slice(i, i + batchSize);
+          console.log(`⏳ Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunksForEmbedding.length / batchSize)}`);
           
-          console.log(`Generating embeddings for ${chunksForEmbedding.length} XLSX chunks...`)
-          const embeddingResults = await embeddings.embedDocumentChunks(chunksForEmbedding)
-          const successfulEmbeddings = embeddingResults.filter(e => !e.error)
+          const batchResults = await embeddings.embedDocumentChunks(batch);
+          embeddingResults.push(...batchResults);
           
-          console.log(`✅ Generated ${successfulEmbeddings.length}/${chunksForEmbedding.length} embeddings`)
+          // Small delay between batches to respect rate limits
+          if (i + batchSize < chunksForEmbedding.length) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
+        const successfulEmbeddings = embeddingResults.filter(e => !e.error);
+        const failedEmbeddings = embeddingResults.filter(e => e.error);
+        
+        console.log(`✅ Generated ${successfulEmbeddings.length}/${chunksForEmbedding.length} embeddings`);
+        
+        if (failedEmbeddings.length > 0) {
+          console.warn(`⚠️ ${failedEmbeddings.length} embeddings failed:`, 
+            failedEmbeddings.map(e => e.error).slice(0, 3)
+          );
+        }
+        
+        // Store vectors in Qdrant
+        if (successfulEmbeddings.length > 0) {
+          const vectorsWithMetadata = successfulEmbeddings.map(emb => ({
+            ...emb,
+            metadata: {
+              ...emb.metadata,
+              trainingDataId: trainingData.id,
+              namespace: namespace,
+              processedAt: new Date().toISOString()
+            }
+          }));
           
-          if (successfulEmbeddings.length > 0) {
-            const vectorsWithMetadata = successfulEmbeddings.map(emb => ({
-              ...emb,
+          await qdrant.upsertVectors(vectorsWithMetadata, namespace);
+          console.log(`✅ Stored ${successfulEmbeddings.length} vectors in Qdrant`);
+          
+          // Update training data with vector metadata
+          await supabase
+            .from('training_data')
+            .update({
               metadata: {
-                ...emb.metadata,
-                trainingDataId: trainingData.id,
+                ...xlsxResult.metadata,
+                wordCount,
+                processingMethod: 'enhanced_xlsx_processor',
+                vectors: successfulEmbeddings.length,
+                vectorsProcessedAt: new Date().toISOString(),
+                vectorsFailed: failedEmbeddings.length,
                 namespace: namespace
               }
-            }))
-            
-            await qdrant.upsertVectors(vectorsWithMetadata, namespace)
-            console.log(`✅ Stored ${successfulEmbeddings.length} XLSX vectors in Qdrant`)
-            
-            await supabase
-              .from('training_data')
-              .update({
-                metadata: {
-                  ...xlsxResult.metadata,
-                  vectors: successfulEmbeddings.length,
-                  vectorsProcessedAt: new Date().toISOString()
-                }
-              })
-              .eq('id', trainingData.id)
-          }
-        } catch (vectorError) {
-          console.error('XLSX vector processing failed:', vectorError)
+            })
+            .eq('id', trainingData.id);
+          
+          console.log('✅ Vector metadata updated in database');
+        } else {
+          console.warn('⚠️ No embeddings were successful - skipping vector storage');
         }
-        // ========================================
-        // VECTOR PROCESSING FOR XLSX - END
-        // ========================================
+        
+      } catch (vectorError) {
+        console.error('❌ Vector processing failed:', vectorError);
+        console.error('Stack trace:', vectorError.stack);
+        
+        // Update metadata to indicate vector processing failed
+        await supabase
+          .from('training_data')
+          .update({
+            metadata: {
+              ...xlsxResult.metadata,
+              wordCount,
+              processingMethod: 'enhanced_xlsx_processor',
+              vectorProcessingError: vectorError.message,
+              vectorsProcessedAt: new Date().toISOString()
+            }
+          })
+          .eq('id', trainingData.id);
+        
+        // Don't fail entire process - XLSX is still usable without vectors
+        console.log('⚠️ Continuing without vector embeddings');
       }
-
-      processingResult = {
-        processed: true,
-        chunks_created: xlsxResult.chunks?.length || 0,
-        word_count: xlsxResult.metadata?.wordCount || 0,
-        sheets_processed: xlsxResult.metadata?.totalSheets || 0,
-        text_length: xlsxResult.text?.length || 0,
-        message: 'XLSX uploaded and processed successfully with vectors!'
-      }
-    } else {
-      // Handle XLSX processing failure
-      await supabase
-        .from('training_data')
-        .update({ 
-          processing_status: 'failed',
-          processing_error: xlsxResult.error
-        })
-        .eq('id', trainingData.id)
-
-      processingResult = {
-        processed: false,
-        error: xlsxResult.error,
-        message: 'File uploaded but XLSX processing failed.'
-      }
+      
+      // ========================================
+      // VECTOR PROCESSING - END
+      // ========================================
     }
+
+    // Step 7: Prepare success response
+    processingResult = {
+      processed: true,
+      chunks_created: xlsxResult.chunks?.length || 0,
+      word_count: wordCount,
+      sheets_processed: xlsxResult.metadata?.totalSheets || 0,
+      rows_processed: xlsxResult.metadata?.totalRows || 0,
+      columns_detected: xlsxResult.metadata?.maxColumns || 0,
+      text_length: textContent.length,
+      has_numeric_data: xlsxResult.metadata?.hasNumericData || false,
+      message: `XLSX uploaded and processed successfully! ${xlsxResult.chunks?.length || 0} chunks created from ${xlsxResult.metadata?.totalSheets || 0} sheet(s).`
+    };
+
   } catch (error) {
-    console.error('❌ XLSX processing error:', error)
+    console.error('❌ XLSX processing error:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Update database with error status
     await supabase
       .from('training_data')
       .update({ 
         processing_status: 'failed',
         processing_error: error.message
       })
-      .eq('id', trainingData.id)
+      .eq('id', trainingData.id);
 
     processingResult = {
       processed: false,
       error: error.message,
-      message: 'File uploaded but XLSX processing failed.'
-    }
+      message: `File uploaded but XLSX processing failed: ${error.message}`
+    };
   }
-  console.log('=== XLSX PROCESSING END ===')
+  
+  console.log('=== XLSX PROCESSING END ===');
 }
-
 
 
 

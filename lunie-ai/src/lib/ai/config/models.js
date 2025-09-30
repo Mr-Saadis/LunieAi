@@ -1,5 +1,5 @@
 export const AI_MODELS = {
-  'gemini-1.5-flash-8b': {
+  'gemini-2.5-flash-8b': {
     name: 'Gemini 1.5 Flash 8B',
     provider: 'google',
     contextLength: 1000000,
@@ -9,7 +9,7 @@ export const AI_MODELS = {
     description: 'Fast and free model for testing',
     recommended: true
   },
-  'gemini-1.5-flash': {
+  'gemini-2.5-flash': {
     name: 'Gemini 1.5 Flash',
     provider: 'google', 
     contextLength: 1000000,

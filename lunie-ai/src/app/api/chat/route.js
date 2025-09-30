@@ -230,7 +230,7 @@ if (!conversation) {
         conversation_id: conversation.id,
         type: 'assistant',  // ← Use 'type' instead of 'role'
         content: ragResult.response,
-        ai_model: ragResult.metadata?.model || 'gemini-1.5-flash',  // ← Use existing ai_model column
+        ai_model: ragResult.metadata?.model || 'gemini-2.5-flash',  // ← Use existing ai_model column
         prompt_tokens: ragResult.metadata?.tokens_used || 0,        // ← Use existing prompt_tokens
         completion_tokens: ragResult.metadata?.tokens_used || 0,    // ← Use existing completion_tokens  
         response_time_ms: ragResult.metadata?.duration || 0,        // ← Use existing response_time_ms

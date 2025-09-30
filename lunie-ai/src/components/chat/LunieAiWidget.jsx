@@ -11,7 +11,7 @@ export default function LunieAiWidget({ chatbotId, config = {} }) {
     window.LunieAiConfig = {
       chatbotId: chatbotId,
       domain: window.location.origin,
-      apiUrl: 'https://lunie-ai.vercel.app',
+      apiUrl: 'http://localhost:3000',
       position: 'bottom-right',
       primaryColor: '#3B82F6',
       welcomeMessage: 'Hi! Kaise help kar sakta hun?',

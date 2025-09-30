@@ -9,8 +9,8 @@ import { NextResponse } from 'next/server';
 
 // Simple models configuration (no external dependencies for now)
 const AI_MODELS = {
-  'gemini-1.5-flash': {
-    id: 'gemini-1.5-flash',
+  'gemini-2.5-flash': {
+    id: 'gemini-2.5-flash',
     displayName: 'Gemini 1.5 Flash',
     description: 'Fast, versatile performance for diverse tasks',
     provider: 'gemini',
@@ -37,8 +37,8 @@ const AI_MODELS = {
     badge: 'FREE',
     recommended: true
   },
-  'gemini-1.5-flash-8b': {
-    id: 'gemini-1.5-flash-8b',
+  'gemini-2.5-flash-8b': {
+    id: 'gemini-2.5-flash-8b',
     displayName: 'Gemini 1.5 Flash 8B',
     description: 'Lightweight, fast model for simple tasks',
     provider: 'gemini',
@@ -100,7 +100,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       models,
-      defaultModel: 'gemini-1.5-flash',
+      defaultModel: 'gemini-2.5-flash',
       userPlan: profile?.subscription_plan || 'free',
       authenticated: !!user
     });

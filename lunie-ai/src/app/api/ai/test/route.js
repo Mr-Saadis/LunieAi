@@ -30,7 +30,7 @@ export async function POST(request) {
     const body = await request.json();
     const {
       prompt,
-      models = ['gemini-1.5-flash'],
+      models = ['gemini-2.5-flash'],
       temperature = 0.7,
       maxTokens = 1000,
       compareMode = false,
@@ -162,7 +162,7 @@ export async function GET(request) {
       }
     ];
 
-    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-8b'];
     const results = {};
 
     for (const model of models) {

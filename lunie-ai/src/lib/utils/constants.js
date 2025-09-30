@@ -35,7 +35,7 @@ export const PLAN_LIMITS = {
 
 export const AI_MODELS = {
   // Gemini Models (FREE TIER FIRST!)
-  'gemini-1.5-flash-8b': { 
+  'gemini-2.5-flash-8b': { 
     name: 'Gemini 1.5 Flash 8B', 
     provider: 'google', 
     fast: true,
@@ -45,7 +45,7 @@ export const AI_MODELS = {
     recommended: true,
     contextLength: 1000000
   },
-  'gemini-1.5-flash': { 
+  'gemini-2.5-flash': { 
     name: 'Gemini 1.5 Flash', 
     provider: 'google', 
     fast: true,

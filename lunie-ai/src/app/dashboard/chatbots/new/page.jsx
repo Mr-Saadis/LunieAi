@@ -140,7 +140,7 @@
 //     name: '',
 //     description: '',
 //     instructions: 'You are a helpful AI assistant. Answer questions clearly and concisely based on the provided context.',
-//     ai_model: 'gemini-1.5-flash-8b',
+//     ai_model: 'gemini-2.5-flash-8b',
 //     theme_color: '#94B9F9',
 //     chat_icon: 'Bot',
 //     custom_color: ''
@@ -790,7 +790,7 @@ export default function CreateChatbotPage() {
     name: '',
     description: '',
     instructions: 'You are a helpful AI assistant. Answer questions clearly and concisely based on the provided context.',
-    ai_model: 'gemini-1.5-flash-8b',
+    ai_model: 'gemini-2.5-flash-8b',
     theme_color: '#94B9F9',
     custom_color: '',
     chat_icon_url: null,

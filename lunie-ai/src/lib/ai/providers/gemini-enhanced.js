@@ -11,7 +11,7 @@ import { getModelConfig } from '../models-config';
 import pRetry from 'p-retry';
 
 export class EnhancedGeminiProvider extends BaseAIProvider {
-  constructor(model = 'gemini-1.5-flash') {
+  constructor(model = 'gemini-2.5-flash') {
     super(model);
     
     if (!process.env.GOOGLE_AI_API_KEY) {

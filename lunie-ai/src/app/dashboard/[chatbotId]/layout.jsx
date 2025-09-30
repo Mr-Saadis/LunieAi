@@ -8,6 +8,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import LunieAiWidget from '@/components/chat/LunieAiWidget'
+import Script from 'next/script'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -350,7 +352,7 @@ export default function ChatbotLayout({ children }) {
           <div className="p-2">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-2 py-1">
               Your Chatbots ({chatbots.length})
-              
+
             </div>
           </div>
 
@@ -515,7 +517,7 @@ export default function ChatbotLayout({ children }) {
                   Settings
                 </Link>
               </Button>
-              
+
             </div>
           </div>
         </div>
@@ -616,9 +618,26 @@ export default function ChatbotLayout({ children }) {
           {/* Page Content */}
           <main className="px-4 sm:px-6 lg:px-8 py-0">
             {children}
+
           </main>
         </div>
       </div>
+
+      <Script id="lunie-ai-config" strategy="afterInteractive">
+        {`
+          window.LunieAiConfig = {
+            chatbotId: "${chatbot.id}",
+            
+          apiUrl: 'http://localhost:3000'
+          };
+        `}
+      </Script>
+
+      <Script
+        src="http://localhost:3000/widget.js"
+        strategy="afterInteractive"
+        async
+      />
     </div>
   )
 }

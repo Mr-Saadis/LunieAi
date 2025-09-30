@@ -6,7 +6,7 @@
 
 export const AI_MODELS = {
   // Gemini Models (FREE)
-  'gemini-1.5-flash': {
+  'gemini-2.5-flash': {
     provider: 'gemini',
     displayName: 'Gemini 1.5 Flash',
     description: 'Fast, versatile performance for diverse tasks',
@@ -41,7 +41,7 @@ export const AI_MODELS = {
     badge: 'FREE'
   },
 
-  'gemini-1.5-flash-8b': {
+  'gemini-2.5-flash-8b': {
     provider: 'gemini',
     displayName: 'Gemini 1.5 Flash 8B',
     description: 'Lightweight, fast model for simple tasks',
@@ -165,7 +165,7 @@ export const EMBEDDING_MODELS = {
 
 // Model Selection Helpers
 export const getModelConfig = (modelId) => {
-  return AI_MODELS[modelId] || AI_MODELS['gemini-1.5-flash'];
+  return AI_MODELS[modelId] || AI_MODELS['gemini-2.5-flash'];
 };
 
 export const getAvailableModels = () => {
@@ -239,7 +239,7 @@ export const getModelUsageStats = (modelId) => {
 
 // Export default configuration
 export default {
-  defaultModel: 'gemini-1.5-flash',
+  defaultModel: 'gemini-2.5-flash',
   defaultEmbeddingModel: 'text-embedding-004',
   models: AI_MODELS,
   embeddingModels: EMBEDDING_MODELS
